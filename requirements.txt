@@ -18,8 +18,11 @@ aiosqlite==0.21.0
     # via -r requirements.in
 annotated-types==0.7.0
     # via pydantic
+anthropic==0.34.0
+    # via -r requirements.in
 anyio==4.9.0
     # via
+    #   anthropic
     #   httpx
     #   openai
     #   starlette

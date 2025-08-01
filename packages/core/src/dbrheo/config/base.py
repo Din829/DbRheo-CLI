@@ -140,6 +140,10 @@ class EnvironmentConfig(ConfigSource):
         self._env_mappings = {
             "DBRHEO_API_KEY": "google_api_key",
             "GOOGLE_API_KEY": "google_api_key",
+            "ANTHROPIC_API_KEY": "anthropic_api_key",
+            "CLAUDE_API_KEY": "claude_api_key",
+            "OPENAI_API_KEY": "openai_api_key",
+            "OPENAI_API_BASE": "openai_api_base",
             "DATABASE_AGENT_SYSTEM_MD": "system_prompt_override",
             "DBRHEO_DATABASE_URL": "database_url",
             "DATABASE_URL": "database_url",
@@ -227,7 +231,7 @@ class DatabaseConfig:
         """加载默认配置值"""
         return {
             # 基础配置
-            "model": "gemini-2.0-flash-exp",
+            "model": "gemini-2.5-flash",  # 默认使用最新的 Gemini 2.5 Flash
             "max_session_turns": 100,
             "compression_threshold": 0.7,
             "auto_execute_mode": False,
@@ -345,7 +349,7 @@ class DatabaseConfig:
         
     def get_model(self) -> str:
         """获取当前使用的AI模型"""
-        return self.get("model", "gemini-2.5-flash-preview-04-17")
+        return self.get("model", "gemini-2.5-flash")
         
     def get_max_session_turns(self) -> int:
         """获取最大会话轮次"""

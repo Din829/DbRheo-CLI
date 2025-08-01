@@ -17,7 +17,8 @@ ENV_VARS = {
     'SHOW_THOUGHTS': 'DBRHEO_SHOW_THOUGHTS',
     'MAX_WIDTH': 'DBRHEO_MAX_WIDTH',
     'MAX_HISTORY': 'DBRHEO_MAX_HISTORY',
-    'HISTORY_FILE': 'DBRHEO_HISTORY_FILE'
+    'HISTORY_FILE': 'DBRHEO_HISTORY_FILE',
+    'MODEL': 'DBRHEO_MODEL'  # 模型选择
 }
 
 # 默认配置值
@@ -37,7 +38,8 @@ COMMANDS = {
     'HELP': ['/help'],
     'CLEAR': ['/clear'],
     'DEBUG': ['/debug'],
-    'LANG': ['/lang', '/language']
+    'LANG': ['/lang', '/language'],
+    'MODEL': ['/model']  # 模型切换
 }
 
 # 确认关键词

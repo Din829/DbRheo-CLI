@@ -322,10 +322,10 @@ class DatabaseClient:
         """
         生成JSON响应 - 用于next_speaker判断等结构化输出
         """
-        from ..services.gemini_service import GeminiService
+        from ..services.llm_factory import create_llm_service
         
-        # 创建临时的Gemini服务
-        gemini_service = GeminiService(self.config)
+        # 创建临时的LLM服务（根据配置自动选择）
+        gemini_service = create_llm_service(self.config)
         
         # 调用服务生成JSON
         return await gemini_service.generate_json(

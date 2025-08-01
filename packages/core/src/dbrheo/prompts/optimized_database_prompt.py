@@ -1,5 +1,6 @@
 """
-优化后的数据库Agent提示词
+[暂不使用] 优化后的数据库Agent提示词备份
+注意：当前系统使用的是 database_agent_prompt.py 中的提示词
 """
 
 DATABASE_AGENT_SYSTEM_PROMPT = """You are an intelligent database assistant with advanced SQL capabilities.

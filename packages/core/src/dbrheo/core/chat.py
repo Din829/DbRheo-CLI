@@ -245,11 +245,11 @@ class DatabaseChat:
         发送消息到Gemini API并返回流式响应
         完全对齐Gemini CLI：让AI基于工具描述自主选择工具
         """
-        from ..services.gemini_service import GeminiService
+        from ..services.llm_factory import create_llm_service
         from ..tools.registry import DatabaseToolRegistry
         
-        # 创建 Gemini 服务
-        gemini_service = GeminiService(self.config)
+        # 创建 LLM 服务（根据配置自动选择）
+        gemini_service = create_llm_service(self.config)
         
         # 获取所有可用工具的函数声明
         tool_registry = DatabaseToolRegistry(self.config)

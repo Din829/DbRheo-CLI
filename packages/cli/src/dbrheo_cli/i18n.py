@@ -145,7 +145,25 @@ class I18n:
             'startup_tip_3': '3. /help 查看更多信息',
             'startup_tip_4': '4. 支持多种数据库：SQLite、MySQL、PostgreSQL',
             'startup_tip_5': '5. 集成 Python 运行时环境进行数据处理与可视化',
+            'startup_tip_6': '6. 支持多种AI模型：Gemini、Claude、GPT (/model 切换)',
             'home_dir_warning': '你正在主目录运行 DbRheo CLI。建议在项目目录中运行。',
+            
+            # 模型相关
+            'model_switched': '已切换到模型: {model}',
+            'model_switch_failed': '切换模型失败: {error}',
+            'current_model': '当前模型: {model}',
+            'model_usage': '使用方法',
+            'available_models': '可用模型',
+            'latest': '最新',
+            'reasoning': '推理增强',
+            'fast': '快速',
+            'default': '默认',
+            'example': '示例',
+            'supported_models': '支持的模型：',
+            'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
+            'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
+            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'help_model': '切换AI模型',
             
             # cli.py 相关
             'esc_abort': '用户按下ESC，中止输出...',
@@ -462,7 +480,25 @@ class I18n:
             'startup_tip_3': '3. /help で詳細情報を表示',
             'startup_tip_4': '4. 対応データベース：SQLite、MySQL、PostgreSQL',
             'startup_tip_5': '5. Python実行環境を統合してデータ処理と可視化',
+            'startup_tip_6': '6. 複数のAIモデルをサポート：Gemini、Claude、GPT (/model で切り替え)',
             'home_dir_warning': 'ホームディレクトリで DbRheo CLI を実行しています。プロジェクトディレクトリでの実行をお勧めします。',
+            
+            # モデル関連
+            'model_switched': 'モデルを {model} に切り替えました',
+            'model_switch_failed': 'モデルの切り替えに失敗しました: {error}',
+            'current_model': '現在のモデル: {model}',
+            'model_usage': '使用方法',
+            'available_models': '利用可能なモデル',
+            'latest': '最新',
+            'reasoning': '推論強化',
+            'fast': '高速',
+            'default': 'デフォルト',
+            'example': '例',
+            'supported_models': 'サポートされているモデル：',
+            'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
+            'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
+            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'help_model': 'AIモデルを切り替える',
             
             # cli.py 相关
             'esc_abort': 'ユーザーがESCを押しました、出力を中止中...',
@@ -980,7 +1016,25 @@ class I18n:
             'startup_tip_3': '3. Type /help for more information',
             'startup_tip_4': '4. Supported databases: SQLite, MySQL, PostgreSQL',
             'startup_tip_5': '5. Integrated Python runtime for data processing and visualization',
+            'startup_tip_6': '6. Support for multiple AI models: Gemini, Claude, GPT (/model to switch)',
             'home_dir_warning': 'You are running DbRheo CLI in your home directory. It is recommended to run in a project directory.',
+            
+            # Model related
+            'model_switched': 'Switched to model: {model}',
+            'model_switch_failed': 'Failed to switch model: {error}',
+            'current_model': 'Current model: {model}',
+            'model_usage': 'Usage',
+            'available_models': 'Available models',
+            'latest': 'latest',
+            'reasoning': 'reasoning',
+            'fast': 'fast',
+            'default': 'default',
+            'example': 'Example',
+            'supported_models': 'Supported models:',
+            'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
+            'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
+            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'help_model': 'Switch AI model',
             
             # cli.py 相关
             'esc_abort': 'User pressed ESC, aborting output...',

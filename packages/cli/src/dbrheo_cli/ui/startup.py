@@ -106,7 +106,8 @@ class StartupScreen:
             _('startup_tip_2'),
             _('startup_tip_3'),
             _('startup_tip_4'),
-            _('startup_tip_5')
+            _('startup_tip_5'),
+            _('startup_tip_6')
         ]
             
         self.console.print()

@@ -300,6 +300,8 @@ class DbRheoCLI:
             self._handle_debug_command(cmd)
         elif cmd.startswith(COMMANDS['LANG'][0]) or cmd.startswith(COMMANDS['LANG'][1]):
             self._handle_lang_command(cmd)
+        elif cmd.startswith(COMMANDS['MODEL'][0]):
+            self._handle_model_command(cmd)
         else:
             console.print(f"[yellow]{_('unknown_command', command=command)}[/yellow]")
     
@@ -368,6 +370,48 @@ class DbRheoCLI:
             console.print(_('current_language', lang=lang_name))
             console.print(_('language_usage'))
     
+    def _handle_model_command(self, cmd: str):
+        """处理模型切换命令"""
+        parts = cmd.split()
+        
+        if len(parts) == 2:
+            model_name = parts[1]
+            # 设置环境变量
+            os.environ[ENV_VARS['MODEL']] = model_name
+            
+            # 重新创建后端连接以使用新模型
+            try:
+                # 清理当前连接状态
+                if hasattr(self, 'signal') and self.signal:
+                    self.signal.abort()  # 中止任何进行中的操作
+                
+                # 重新初始化后端
+                self._init_backend()
+                
+                console.print(f"[green]{_('model_switched', model=model_name)}[/green]")
+                
+                # 显示具体的可用模型
+                console.print(f"\n[cyan]{_('available_models')}:[/cyan]")
+                console.print(f"  [bold]/model gemini[/bold] → Gemini 2.5 Flash")
+                console.print(f"  [bold]/model claude[/bold] → Claude Sonnet 4 ({_('latest')})")
+                console.print(f"  [bold]/model sonnet3.7[/bold] → Claude 3.7 ({_('reasoning')})")
+                console.print(f"  [bold]/model gpt[/bold] → GPT-4.1 ({_('latest')})")
+                console.print(f"  [bold]/model gpt-mini[/bold] → GPT-4.1 Mini ({_('fast')})")
+            except Exception as e:
+                console.print(f"[red]{_('model_switch_failed', error=e)}[/red]")
+                log_info("CLI", f"Model switch failed: {e}")
+        else:
+            # 显示当前模型和可用选项
+            current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
+            console.print(f"[cyan]{_('current_model', model=current_model)}[/cyan]")
+            console.print(f"\n{_('model_usage')}:\n")
+            console.print(f"  [bold]/model gemini[/bold] → Gemini 2.5 Flash ({_('default')})")
+            console.print(f"  [bold]/model claude[/bold] → Claude Sonnet 4")
+            console.print(f"  [bold]/model sonnet3.7[/bold] → Claude 3.7")
+            console.print(f"  [bold]/model gpt[/bold] → GPT-4.1")
+            console.print(f"  [bold]/model gpt-mini[/bold] → GPT-4.1 Mini")
+            console.print(f"\n[dim]{_('example')}: /model claude[/dim]")
+    
     def _show_help(self):
         """显示帮助信息"""
         help_text = f"""
@@ -377,6 +421,7 @@ class DbRheoCLI:
   /clear       - {_('help_clear')}
   /debug <0-5> - {_('help_debug')}
   /lang [code] - {_('help_lang')}
+  /model [name]- {_('help_model')}
   ``` 或 <<<   - {_('help_multiline')}
   ESC         - {_('help_esc')}
   

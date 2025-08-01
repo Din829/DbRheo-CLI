@@ -4,7 +4,10 @@
 """
 
 from .gemini_service import GeminiService
+from .llm_factory import create_llm_service, LLMServiceFactory
 
 __all__ = [
-    "GeminiService"
+    "GeminiService",
+    "create_llm_service", 
+    "LLMServiceFactory"
 ]

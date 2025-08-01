@@ -122,11 +122,14 @@ def setup_environment():
 @click.option('--config',
               type=click.Path(exists=True),
               help='配置文件路径')
+@click.option('--model',
+              help='选择AI模型 (例如: gemini, claude-3.5-sonnet, gpt-4.1)')
 def main(db_file: Optional[str], 
          log: bool, 
          debug: Optional[int],
          no_color: bool,
-         config: Optional[str]):
+         config: Optional[str],
+         model: Optional[str]):
     """
     DbRheo CLI - 数据库智能助手
     
@@ -150,6 +153,11 @@ def main(db_file: Optional[str],
     if log:
         os.environ[ENV_VARS['ENABLE_LOG']] = 'true'
         log_info("Main", _('log_enabled'))
+    
+    # 设置模型
+    if model:
+        os.environ[ENV_VARS['MODEL']] = model
+        log_info("Main", _('model_switched', model=model))
     
     # 创建CLI配置
     cli_config = CLIConfig(

@@ -34,8 +34,25 @@ class GeminiService:
         genai.configure(api_key=api_key)
         
         # 配置模型
-        model_name = self.config.get_model() or "gemini-2.5-flash-preview-04-17"
-        self.model_name = model_name
+        model_name = self.config.get_model() or "gemini-2.5-flash"
+        
+        # 映射简短名称到完整模型名（只保留核心模型）
+        model_mappings = {
+            "gemini": "gemini-2.5-flash",  # 默认且唯一的 Gemini 模型
+            "flash": "gemini-2.5-flash",
+            "gemini-flash": "gemini-2.5-flash",
+            "gemini-2.5": "gemini-2.5-flash",
+            "gemini-2.5-flash": "gemini-2.5-flash",
+        }
+        
+        # 如果是简短名称，转换为完整名称
+        for short_name, full_name in model_mappings.items():
+            if model_name.lower() == short_name.lower():
+                self.model_name = full_name
+                break
+        else:
+            # 使用原始名称
+            self.model_name = model_name
         
         # 默认生成配置
         self.default_generation_config = {
