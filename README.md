@@ -1,4 +1,4 @@
-# DbRheoCLI - DB/DA-AIエージェント
+# DbRheoCLI - DataBase/DataAnalysis エージェント
 
 DbRheoは、データベース操作/データ分析CLIエージェントです。自然言語でのデータベースクエリ実行、スキーマ探索、リスク評価機能、またPythonを使ってデータ分析能力を提供します。
 
@@ -47,7 +47,7 @@ python cli.py
 - Python 3.9以上
 - Node.js 20以上（Web UI開発時のみ）
 
-### 対応データベース
+### 対応データベース（DEMOのため、今後拡張予定）
 - PostgreSQL 12以上
 - MySQL 8.0以上
 - SQLite 3.35以上
