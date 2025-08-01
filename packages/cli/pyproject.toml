@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbrheo-cli"
+version = "0.1.0"
+description = "智能数据库Agent的命令行界面"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "DbRheo Team", email = "contact@dbrheo.ai"}
+]
+license = {text = "MIT"}
+keywords = ["database", "cli", "ai", "agent"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "rich>=13.7.1",
+    "pygments>=2.17.2", 
+    "click>=8.1.7",
+    "rich-gradient>=0.1.2",  # 渐变文字效果
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.7.0",
+    "mypy>=1.5.0",
+    "ruff>=0.1.0",
+]
+# 增强布局功能（可选）
+enhanced = [
+    "prompt-toolkit>=3.0.43",
+]
+
+[project.scripts]
+dbrheo = "dbrheo_cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "UP", "YTT", "B", "A", "C4", "T20", "SIM"]
+ignore = ["E501"]
+target-version = "py39"

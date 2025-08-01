@@ -1,0 +1,86 @@
+# 项目元数据和依赖配置 - 基于Gemini CLI架构的数据库Agent
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbrheo"
+version = "1.0.0"
+description = "智能数据库Agent - 基于Gemini CLI架构"
+authors = [{name = "DbRheo Team", email = "team@dbrheo.com"}]
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    # Web框架和服务器（基于最新稳定版本）
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "websockets>=13.1",
+
+    # 数据库相关（对齐生产环境版本）
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "aiomysql>=0.2.0",
+    "aiosqlite>=0.20.0",
+
+    # AI和API（对齐Gemini CLI使用的版本）
+    "google-generativeai>=0.8.3",
+    "google-auth>=2.35.0",
+    "google-auth-oauthlib>=1.2.1",
+
+    # 核心依赖（生产级版本）
+    "pydantic>=2.10.0",
+    "pyyaml>=6.0.2",
+    "rich>=13.9.0",
+    "click>=8.1.7",
+
+    # 工具函数（最新稳定版本）
+    "aiofiles>=24.1.0",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.12",
+    
+    # 监控和遥测（对齐Gemini CLI的OpenTelemetry版本）
+    "opentelemetry-api>=1.28.0",           # 对齐@opentelemetry/api@1.9.0
+    "opentelemetry-sdk>=1.28.0",
+    "opentelemetry-exporter-otlp>=1.28.0", # 对齐@opentelemetry/exporter-*@0.52.0
+    "opentelemetry-instrumentation-httpx>=0.49b0"
+]
+
+[project.optional-dependencies]
+dev = [
+    # 测试框架
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+
+    # 代码质量工具
+    "black>=24.10.0",
+    "isort>=5.13.0",
+    "mypy>=1.13.0",
+    "ruff>=0.8.0",
+
+    # 开发工具
+    "coverage>=7.6.0",
+    "bandit>=1.8.0",
+    "safety>=3.2.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["packages/core/src"]
+include = ["dbrheo*"]
+
+[tool.setuptools.package-dir]
+"" = "packages/core/src"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.9"
+strict = true

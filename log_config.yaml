@@ -1,0 +1,83 @@
+# DbRheo 实时日志配置
+# 灵活配置日志系统的行为
+
+# 日志级别: DEBUG, INFO, WARNING, ERROR
+level: INFO
+
+# 启用的事件类型
+enabled_types:
+  - conversation    # 对话记录
+  - tool_call      # 工具调用
+  - tool_result    # 工具结果
+  - error          # 错误信息
+  - system         # 系统信息
+  # - network      # 网络请求（可选）
+  # - performance  # 性能指标（可选）
+
+# 输出配置
+outputs:
+  # 终端输出
+  terminal:
+    enabled: true
+    color: true
+    format: "[{time}] [{type}] {source} - {message}"
+  
+  # 文件输出
+  file:
+    enabled: true
+    path: "logs/dbrheo_realtime.log"
+    max_size: 10485760  # 10MB
+    format: "json"      # json 或 text
+  
+  # WebSocket输出（用于Web界面）
+  websocket:
+    enabled: false
+    url: "ws://localhost:8765"
+
+# 过滤器
+filters:
+  # 按来源过滤
+  # source_include: ["DatabaseChat", "SQLTool"]
+  # source_exclude: ["DebugLogger"]
+  
+  # 按工具过滤
+  # tool_include: ["sql_tool", "schema_discovery"]
+  # tool_exclude: ["web_search"]
+  
+  # 按内容过滤（正则表达式）
+  # content_include: ["SELECT", "INSERT"]
+  # content_exclude: ["DEBUG"]
+
+# 性能设置
+performance:
+  # 队列大小
+  queue_size: 1000
+  
+  # 批处理大小（一次处理多少条日志）
+  batch_size: 10
+  
+  # 批处理间隔（毫秒）
+  batch_interval: 100
+
+# 高级特性
+features:
+  # 自动截断长消息
+  truncate_messages: true
+  max_message_length: 500
+  
+  # 记录执行时间
+  track_execution_time: true
+  
+  # 记录内存使用
+  track_memory_usage: false
+  
+  # 错误堆栈跟踪
+  include_stack_trace: true
+  
+  # 敏感信息过滤
+  filter_sensitive:
+    enabled: true
+    patterns:
+      - "password"
+      - "api_key"
+      - "secret"

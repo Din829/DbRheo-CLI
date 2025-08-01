@@ -1,0 +1,288 @@
+--- Python Dependencies (pip freeze) ---
+aiofiles==24.1.0
+aiohappyeyeballs==2.6.1
+aiohttp==3.12.13
+aiomysql==0.2.0
+aiosignal==1.3.2
+aiosqlite==0.21.0
+annotated-types==0.7.0
+anyio==4.8.0
+asyncpg==0.30.0
+attrs==25.3.0
+Authlib==1.6.0
+av==14.3.0
+bandit==1.8.6
+beautifulsoup4==4.13.4
+black==25.1.0
+blinker==1.9.0
+Bottleneck==1.5.0
+cachetools==5.5.2
+certifi==2025.1.31
+cffi==1.17.1
+charset-normalizer==3.4.1
+click==8.1.8
+cloud-sql-python-connector==1.18.2
+colorama==0.4.6
+coloredlogs==15.0.1
+contourpy==1.3.1
+coverage==7.9.2
+cryptography==44.0.2
+ctranslate2==4.6.0
+cycler==0.12.1
+-e git+https://github.com/Din829/gemini-cli-fork.git@9618162a1d6ea4290cd173d77f106cb9d2120a7b#egg=dbrheo&subdirectory=学习中\dbrheo
+-e git+https://github.com/Din829/gemini-cli-fork.git@9618162a1d6ea4290cd173d77f106cb9d2120a7b#egg=dbrheo_cli&subdirectory=学习中\dbrheo\packages\cli
+-e git+https://github.com/Din829/gemini-cli-fork.git@9618162a1d6ea4290cd173d77f106cb9d2120a7b#egg=dbrheo_core&subdirectory=学习中\dbrheo\packages\core
+dill==0.4.0
+distro==1.9.0
+dnspython==2.7.0
+docling==2.32.0
+docling-core==2.30.1
+docling-ibm-models==3.4.3
+docling-parse==4.0.1
+docstring_parser==0.16
+dparse==0.6.4
+easyocr==1.7.2
+et_xmlfile==2.0.0
+fastapi==0.115.12
+faster-whisper==1.1.1
+filelock==3.12.4
+filetype==1.2.0
+Flask==2.3.3
+flatbuffers==25.2.10
+fonttools==4.56.0
+frozenlist==1.7.0
+fsspec==2025.3.2
+gitdb==4.0.12
+GitPython==3.1.44
+google-ai-generativelanguage==0.6.15
+google-api-core==2.25.0rc1
+google-api-python-client==2.169.0
+google-auth==2.40.1
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.2
+google-cloud-aiplatform==1.99.0
+google-cloud-bigquery==3.34.0
+google-cloud-core==2.4.3
+google-cloud-language==2.17.2
+google-cloud-resource-manager==1.14.2
+google-cloud-storage==2.19.0
+google-crc32c==1.7.1
+google-genai==1.21.1
+google-generativeai==0.8.5
+google-resumable-media==2.7.2
+googleapis-common-protos==1.70.0
+greenlet==3.2.0
+grpc-google-iam-v1==0.14.2
+grpcio==1.71.0
+grpcio-status==1.71.0
+gunicorn==23.0.0
+h11==0.14.0
+httpcore==1.0.7
+httplib2==0.22.0
+httptools==0.6.4
+httpx==0.28.1
+httpx-sse==0.4.0
+huggingface-hub==0.30.2
+humanfriendly==10.0
+idna==3.10
+imageio==2.37.0
+importlib_metadata==8.7.0
+iniconfig==2.1.0
+isort==6.0.1
+itsdangerous==2.2.0
+Jinja2==3.1.6
+jiter==0.9.0
+jsonlines==3.1.0
+jsonpatch==1.33
+jsonpointer==3.0.0
+jsonref==1.1.0
+jsonschema==4.23.0
+jsonschema-specifications==2025.4.1
+kiwisolver==1.4.8
+langchain==0.3.23
+langchain-core==0.3.66
+langchain-google-vertexai==2.0.26
+langchain-mcp-adapters==0.1.8
+langchain-openai==0.3.18
+langchain-text-splitters==0.3.8
+langgraph==0.4.7
+langgraph-checkpoint==2.0.26
+langgraph-checkpoint-sqlite==2.0.10
+langgraph-prebuilt==0.2.1
+langgraph-sdk==0.1.61
+langsmith==0.4.1
+latex2mathml==3.78.0
+lazy_loader==0.4
+linkify-it-py==2.0.3
+lxml==5.4.0
+markdown-it-py==3.0.0
+marko==2.1.3
+MarkupSafe==3.0.2
+marshmallow==4.0.0
+matplotlib==3.10.1
+mcp==1.10.1
+mcp-server-git @ file:///C:/Users/q9951/Documents/Cline/MCP/git-server/src/git
+mdit-py-plugins==0.4.2
+mdurl==0.1.2
+mpire==2.10.2
+mpmath==1.3.0
+multidict==6.5.1
+multiprocess==0.70.18
+mypy==1.17.0
+mypy_extensions==1.1.0
+mysql-connector-python==9.3.0
+networkx==3.4.2
+ninja==1.11.1.4
+numexpr==2.11.0
+numpy==2.2.3
+oauthlib==3.3.1
+onnxruntime==1.21.1
+openai==1.75.0
+opencv-python-headless==4.11.0.86
+openpyxl==3.1.5
+opentelemetry-api==1.35.0
+opentelemetry-exporter-otlp==1.35.0
+opentelemetry-exporter-otlp-proto-common==1.35.0
+opentelemetry-exporter-otlp-proto-grpc==1.35.0
+opentelemetry-exporter-otlp-proto-http==1.35.0
+opentelemetry-instrumentation==0.56b0
+opentelemetry-instrumentation-httpx==0.56b0
+opentelemetry-proto==1.35.0
+opentelemetry-sdk==1.35.0
+opentelemetry-semantic-conventions==0.56b0
+opentelemetry-util-http==0.56b0
+orjson==3.10.16
+ormsgpack==1.9.1
+packaging==24.2
+pandas==2.2.3
+pathspec==0.12.1
+pbr==6.1.1
+pillow==11.1.0
+platformdirs==4.3.8
+pluggy==1.6.0
+polars==1.31.0
+prompt_toolkit==3.0.51
+propcache==0.3.2
+proto-plus==1.26.1
+protobuf==5.29.4
+psutil==6.0.0
+pyarrow==19.0.1
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pyclipper==1.3.0.post6
+pycparser==2.22
+pydantic==2.10.6
+pydantic-settings==2.8.1
+pydantic_core==2.27.2
+Pygments==2.19.2
+pylatexenc==2.10
+PyMuPDF==1.26.0
+PyMySQL==1.1.1
+pyparsing==3.2.1
+PyPDF2==3.0.1
+pypdfium2==4.30.1
+pyreadline3==3.5.4
+pytest==8.3.5
+pytest-asyncio==1.1.0
+pytest-cov==6.2.1
+pytest-mock==3.14.0
+python-bidi==0.6.6
+python-dateutil==2.9.0.post0
+python-docx==1.1.2
+python-dotenv==1.0.1
+python-multipart==0.0.20
+python-pptx==1.0.2
+pytz==2025.1
+pywin32==310
+PyYAML==6.0.2
+referencing==0.36.2
+regex==2024.11.6
+requests==2.32.3
+requests-oauthlib==2.0.0
+requests-toolbelt==1.0.0
+rich==14.0.0
+rpds-py==0.25.0
+rsa==4.9.1
+rtree==1.4.0
+ruamel.yaml==0.18.14
+ruamel.yaml.clib==0.2.12
+ruff==0.12.3
+safetensors==0.5.3
+safety==3.2.9
+safety-schemas==0.0.5
+scikit-image==0.25.2
+scipy==1.15.3
+seaborn==0.13.2
+semchunk==2.2.2
+setuptools==78.1.1
+shapely==2.1.0
+shellingham==1.5.4
+six==1.17.0
+smmap==5.0.2
+sniffio==1.3.1
+soupsieve==2.7
+SQLAlchemy==2.0.40
+sqlite-vec==0.1.6
+sse-starlette==2.2.1
+starlette==0.46.1
+stevedore==5.4.1
+sympy==1.13.3
+tabulate==0.9.0
+tenacity==8.5.0
+textual==4.0.0
+tifffile==2025.5.10
+tiktoken==0.9.0
+tokenizers==0.21.1
+torch==2.8.0.dev20250418+cu128
+torchaudio==2.6.0.dev20250419+cu128
+torchvision==0.22.0.dev20250419+cu128
+tqdm==4.67.1
+transformers==4.51.3
+typer==0.15.4
+typing_extensions==4.14.1
+tzdata==2025.1
+uc-micro-py==1.0.3
+uritemplate==4.1.1
+urllib3==2.4.0
+uvicorn==0.34.0
+validators==0.35.0
+watchfiles==1.1.0
+wcwidth==0.2.13
+websockets==15.0.1
+Werkzeug==3.1.3
+wrapt==1.17.2
+XlsxWriter==3.2.3
+xxhash==3.5.0
+yarl==1.20.1
+yt-dlp==2025.5.22
+zipp==3.23.0
+zstandard==0.23.0
+
+--- Node.js Dependencies (npm list --depth=0) ---
+@google/gemini-cli@0.1.11 C:\Users\q9951\Desktop\gemini-cli
++-- UNMET DEPENDENCY @google/gemini-cli-core@file:C:\Users\q9951\Desktop\gemini-cli\packages\core
++-- UNMET DEPENDENCY @google/gemini-cli@file:C:\Users\q9951\Desktop\gemini-cli\packages\cli
++-- UNMET DEPENDENCY @types/micromatch@^4.0.9
++-- UNMET DEPENDENCY @types/mime-types@^3.0.1
++-- UNMET DEPENDENCY @types/minimatch@^5.1.2
++-- UNMET DEPENDENCY @types/shell-quote@^1.7.5
++-- UNMET DEPENDENCY @vitest/coverage-v8@^3.1.1
++-- UNMET DEPENDENCY concurrently@^9.2.0
++-- UNMET DEPENDENCY cross-env@^7.0.3
++-- UNMET DEPENDENCY esbuild@^0.25.0
++-- UNMET DEPENDENCY eslint-config-prettier@^10.1.2
++-- UNMET DEPENDENCY eslint-plugin-import@^2.31.0
++-- UNMET DEPENDENCY eslint-plugin-license-header@^0.8.0
++-- UNMET DEPENDENCY eslint-plugin-react-hooks@^5.2.0
++-- UNMET DEPENDENCY eslint-plugin-react@^7.37.5
++-- UNMET DEPENDENCY eslint@^9.24.0
++-- UNMET DEPENDENCY glob@^10.4.5
++-- UNMET DEPENDENCY globals@^16.0.0
++-- UNMET DEPENDENCY json@^11.0.0
++-- UNMET DEPENDENCY lodash@^4.17.21
++-- UNMET DEPENDENCY memfs@^4.17.2
++-- UNMET DEPENDENCY prettier@^3.5.3
++-- UNMET DEPENDENCY react-devtools-core@^4.28.5
++-- UNMET DEPENDENCY typescript-eslint@^8.30.1
++-- UNMET DEPENDENCY vitest@^3.2.4
+`-- UNMET DEPENDENCY yargs@^17.7.2

@@ -1,0 +1,36 @@
+# 数据库Agent核心依赖 - 完全对齐文档要求
+
+# Web框架和服务器（基于最新稳定版本）
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+websockets>=13.1
+
+# 数据库相关（对齐生产环境版本）
+sqlalchemy[asyncio]>=2.0.36
+asyncpg>=0.30.0
+aiomysql>=0.2.0
+aiosqlite>=0.20.0
+
+# AI和API（对齐Gemini CLI使用的版本）
+google-generativeai>=0.8.3
+google-auth>=2.35.0
+google-auth-oauthlib>=1.2.1
+
+# 核心依赖（生产级版本）
+pydantic>=2.10.0
+pyyaml>=6.0.2
+rich>=13.9.0
+click>=8.1.7
+
+# 工具函数（最新稳定版本）
+aiofiles>=24.1.0
+httpx>=0.28.0
+python-multipart>=0.0.12
+
+# 监控遥测（可选依赖）
+opentelemetry-api>=1.27.0
+opentelemetry-sdk>=1.27.0
+opentelemetry-exporter-otlp>=1.27.0
+
+# 前端界面（可选依赖）
+rich 

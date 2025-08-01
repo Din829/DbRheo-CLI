@@ -1,0 +1,37 @@
+/* 全局样式 - DbRheo Web界面 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 基础样式重置和全局设置 */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+/* 组件样式 */
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-4 rounded-md transition-colors;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+}
+
+/* 工具样式 */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
