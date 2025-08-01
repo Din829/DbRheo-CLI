@@ -1,4 +1,4 @@
-# Git忽略规则 - DbRheo项目
+# Git Ignore Rules - DbRheo Project
 
 # Python
 __pycache__/
@@ -28,32 +28,47 @@ venv/
 env/
 ENV/
 .venv/
+.conda/
 
-# Environment variables
+# Environment variables (keep .env.example for reference)
 .env
 .env.local
 .env.production
+.env.development
+.env.test
 
-# IDE
+# IDE and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.vim/
+.emacs.d/
+.sublime-*
 
 # Testing
 .coverage
 .pytest_cache/
 htmlcov/
 .tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
 
-# Logs
+# Logs (keep logs directory structure but ignore log files)
 *.log
-logs/
+logs/*.log
+logs/**/*.log
+!logs/.gitkeep
 
-# Database
+# Database files (runtime databases, not schema)
 *.db
 *.sqlite
 *.sqlite3
+mydatabase.db
+test.db
 
 # Node.js (for web package)
 node_modules/
@@ -61,18 +76,41 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.yarn/
+.pnp.*
 
 # Build outputs
 dist/
 build/
 .next/
 .nuxt/
+out/
+.output/
 
-# OS
+# OS specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
 # Temporary files
 *.tmp
 *.temp
 .cache/
+.parcel-cache/
+
+# Development and testing data
+sample_data/
+*.xlsx
+*.csv
+!testdata/
+!**/sample_data.json
+
+# Personal/sensitive files
+session.md
+**/session.md
+dependencies_report.txt

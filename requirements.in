@@ -1,0 +1,36 @@
+# DbRheo Project Dependencies
+# This file contains the high-level dependencies
+# Use pip-compile to generate requirements.txt with exact versions
+
+# Web Framework and Server
+fastapi>=0.116.0
+uvicorn[standard]>=0.35.0
+
+# Database Related
+sqlalchemy[asyncio]>=2.0.42
+asyncpg>=0.30.0
+aiomysql>=0.2.0
+aiosqlite>=0.21.0
+
+# AI and API
+google-generativeai>=0.8.5
+
+# Core Dependencies
+pydantic>=2.11.7
+pyyaml>=6.0.2
+rich>=14.1.0
+click>=8.2.1
+
+# Utility Libraries
+aiofiles>=24.1.0
+httpx>=0.28.1
+
+# Network and Parsing
+beautifulsoup4>=4.13.4
+requests>=2.32.4
+
+# Monitoring and Telemetry (Optional)
+opentelemetry-api>=1.36.0
+opentelemetry-sdk>=1.36.0
+opentelemetry-exporter-otlp>=1.36.0
+opentelemetry-instrumentation-httpx>=0.57b0
