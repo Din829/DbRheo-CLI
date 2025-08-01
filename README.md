@@ -1,3 +1,4 @@
+
 # DbRheoCLI - DataBase/DataAnalysis エージェント
 
 DbRheoは、データベース操作/データ分析CLIエージェントです。自然言語でのデータベースクエリ実行、スキーマ探索、リスク評価機能、またPythonを使ってデータ分析能力を提供します。
@@ -379,3 +380,4 @@ MIT License - 詳細は[LICENSE](LICENSE)ファイルを参照してください
 - マルチデータベース対応
 - Pythonコード実行機能
 - WebインターフェースMVP実装
+
