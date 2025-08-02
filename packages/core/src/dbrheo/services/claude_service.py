@@ -301,17 +301,141 @@ class ClaudeService:
                     "role": role,
                     "content": "\n".join(text_parts)
                 })
+        
+        # 修复tool_use和tool_result的配对问题
+        # 先收集所有的tool_result，建立ID到响应的映射
+        tool_results_map = {}
+        for msg in messages:
+            if (msg["role"] == "user" and 
+                isinstance(msg.get("content"), list) and
+                len(msg["content"]) == 1 and
+                msg["content"][0].get("type") == "tool_result"):
+                tool_use_id = msg["content"][0].get("tool_use_id")
+                if tool_use_id:
+                    tool_results_map[tool_use_id] = msg
+        
+        # 记录已使用的tool_result
+        used_tool_ids = set()
+        
+        fixed_messages = []
+        i = 0
+        while i < len(messages):
+            msg = messages[i]
+            # 检查是否是包含tool_use的assistant消息
+            if (msg["role"] == "assistant" and 
+                isinstance(msg.get("content"), list)):
+                # 提取所有tool_use
+                tool_uses = [item for item in msg["content"] if item.get("type") == "tool_use"]
                 
+                if tool_uses:
+                    # 添加当前消息
+                    fixed_messages.append(msg)
+                    
+                    # 立即添加对应的tool_result（如果存在）
+                    for tool_use in tool_uses:
+                        tool_id = tool_use.get("id")
+                        if tool_id and tool_id in tool_results_map and tool_id not in used_tool_ids:
+                            fixed_messages.append(tool_results_map[tool_id])
+                            used_tool_ids.add(tool_id)
+                    
+                    i += 1
+                else:
+                    # 没有tool_use的assistant消息
+                    fixed_messages.append(msg)
+                    i += 1
+            elif (msg["role"] == "user" and 
+                  isinstance(msg.get("content"), list) and
+                  len(msg["content"]) == 1 and
+                  msg["content"][0].get("type") == "tool_result"):
+                # 跳过已经添加的tool_result
+                tool_use_id = msg["content"][0].get("tool_use_id")
+                if tool_use_id in used_tool_ids:
+                    i += 1
+                    continue
+                else:
+                    # 孤立的tool_result，保留它
+                    fixed_messages.append(msg)
+                    i += 1
+            else:
+                # 其他消息：跳过打断tool配对的"Please continue"
+                if (msg["role"] == "user" and 
+                    isinstance(msg.get("content"), str) and
+                    msg["content"] in ["Please continue.", "Continue the conversation."] and
+                    len(fixed_messages) > 0):
+                    # 检查前一条消息是否是未配对的assistant with tool_use
+                    prev_msg = fixed_messages[-1]
+                    if (prev_msg["role"] == "assistant" and 
+                        isinstance(prev_msg.get("content"), list)):
+                        # 检查是否有未配对的tool_use
+                        tool_uses = [item for item in prev_msg["content"] if item.get("type") == "tool_use"]
+                        unpaired = any(
+                            tool_use.get("id") not in used_tool_ids 
+                            for tool_use in tool_uses
+                        )
+                        if unpaired:
+                            # 跳过这个"Please continue"，因为它打断了配对
+                            i += 1
+                            continue
+                
+                # 添加其他正常消息
+                fixed_messages.append(msg)
+                i += 1
+        
+        # 检查是否有未配对的tool_use，为它们生成占位响应
+        # 这解决了工具等待确认时的配对问题
+        final_messages = []
+        for i, msg in enumerate(fixed_messages):
+            final_messages.append(msg)
+            
+            # 如果是包含tool_use的assistant消息
+            if (msg["role"] == "assistant" and 
+                isinstance(msg.get("content"), list)):
+                # 提取所有tool_use
+                tool_uses = [item for item in msg["content"] if item.get("type") == "tool_use"]
+                
+                if tool_uses:
+                    # 检查每个tool_use是否有对应的响应
+                    for tool_use in tool_uses:
+                        tool_id = tool_use.get("id")
+                        if not tool_id:
+                            continue
+                            
+                        # 检查下一条消息是否是对应的tool_result
+                        has_response = False
+                        if i + 1 < len(fixed_messages):
+                            next_msg = fixed_messages[i + 1]
+                            if (next_msg["role"] == "user" and 
+                                isinstance(next_msg.get("content"), list) and
+                                len(next_msg["content"]) == 1 and
+                                next_msg["content"][0].get("type") == "tool_result" and
+                                next_msg["content"][0].get("tool_use_id") == tool_id):
+                                has_response = True
+                        
+                        # 如果没有响应，生成占位响应
+                        if not has_response:
+                            placeholder_response = {
+                                "role": "user",
+                                "content": [{
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_id,
+                                    "content": "Tool execution pending or awaiting confirmation"
+                                }]
+                            }
+                            final_messages.append(placeholder_response)
+                            # 记录这个占位响应
+                            if DebugLogger.should_log("DEBUG"):
+                                log_info("Claude", f"Generated placeholder response for tool_use_id: {tool_id}")
+        
         # Claude 要求消息必须是 user/assistant 交替
         # 确保第一条消息是 user
-        if messages and messages[0]["role"] != "user":
-            messages.insert(0, {"role": "user", "content": "Continue the conversation."})
+        if final_messages and final_messages[0]["role"] != "user":
+            final_messages.insert(0, {"role": "user", "content": "Continue the conversation."})
             
         # 确保最后一条消息是 user（如果不是）
-        if messages and messages[-1]["role"] != "user":
-            messages.append({"role": "user", "content": "Please continue."})
+        if final_messages and final_messages[-1]["role"] != "user":
+            final_messages.append({"role": "user", "content": "Please continue."})
             
-        return messages
+        return final_messages
         
     def _process_claude_event(self, event) -> Optional[Dict[str, Any]]:
         """处理 Claude 流式事件，转换为 Gemini 格式"""

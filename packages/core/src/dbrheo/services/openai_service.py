@@ -246,6 +246,9 @@ class OpenAIService:
                 "content": system_instruction
             })
         
+        # 先收集所有消息，包括tool响应
+        tool_responses_pending = []  # 待处理的tool响应
+        
         for content in contents:
             # 转换角色
             role = "assistant" if content.get("role") == "model" else content.get("role", "user")
@@ -271,14 +274,13 @@ class OpenAIService:
                             }
                         })
                     elif "function_response" in part or "functionResponse" in part:
-                        # 函数响应 - OpenAI 使用 tool role
+                        # 收集函数响应，稍后处理
                         fr = part.get("function_response") or part.get("functionResponse")
-                        messages.append({
+                        tool_responses_pending.append({
                             "role": "tool",
                             "tool_call_id": fr.get("id", ""),
                             "content": json.dumps(fr.get("response", {}))
                         })
-                        continue
             
             # 构建消息
             if text_parts or tool_calls:
@@ -293,8 +295,135 @@ class OpenAIService:
                     message["tool_calls"] = tool_calls
                     
                 messages.append(message)
+        
+        # 处理剩余的tool响应（如果有）
+        if tool_responses_pending:
+            messages.extend(tool_responses_pending)
+        
+        # 修复tool_calls和tool响应的配对问题
+        # 移除打断配对的用户消息
+        fixed_messages = []
+        if system_instruction:
+            # 保留系统消息
+            fixed_messages.append(messages[0])
+            start_idx = 1
+        else:
+            start_idx = 0
+            
+        # 调试：打印修复前的消息
+        if DebugLogger.should_log("DEBUG"):
+            log_info("OpenAI", f"修复前的消息数量: {len(messages)}")
+            for idx, msg in enumerate(messages):
+                role = msg.get("role", "unknown")
+                if "tool_calls" in msg:
+                    log_info("OpenAI", f"  [{idx}] {role} - has tool_calls: {[tc['id'] for tc in msg['tool_calls']]}")
+                elif role == "tool":
+                    log_info("OpenAI", f"  [{idx}] {role} - tool_call_id: {msg.get('tool_call_id', 'none')}")
+                else:
+                    content_preview = str(msg.get("content", ""))[:50]
+                    log_info("OpenAI", f"  [{idx}] {role} - {content_preview}")
+            
+        # 先收集所有的tool响应，建立ID到响应的映射
+        tool_responses_map = {}
+        for msg in messages[start_idx:]:
+            if msg["role"] == "tool" and "tool_call_id" in msg:
+                tool_responses_map[msg["tool_call_id"]] = msg
+        
+        # 记录已使用的tool响应
+        used_tool_ids = set()
+        
+        i = start_idx
+        while i < len(messages):
+            msg = messages[i]
+            # 检查是否是包含tool_calls的assistant消息
+            if msg["role"] == "assistant" and "tool_calls" in msg:
+                # 添加当前消息
+                fixed_messages.append(msg)
                 
-        return messages
+                # 立即添加对应的tool响应（如果存在）
+                for tool_call in msg["tool_calls"]:
+                    tool_id = tool_call["id"]
+                    if tool_id in tool_responses_map and tool_id not in used_tool_ids:
+                        fixed_messages.append(tool_responses_map[tool_id])
+                        used_tool_ids.add(tool_id)
+                
+                i += 1
+            elif msg["role"] == "tool":
+                # 跳过已经添加的tool响应
+                if msg.get("tool_call_id") in used_tool_ids:
+                    i += 1
+                    continue
+                else:
+                    # 孤立的tool响应，保留它
+                    fixed_messages.append(msg)
+                    i += 1
+            else:
+                # 其他消息：跳过打断tool配对的"Please continue"
+                if (msg["role"] == "user" and 
+                    msg.get("content", "").strip() in ["Please continue.", "Continue the conversation."] and
+                    i > start_idx and 
+                    len(fixed_messages) > 0):
+                    # 检查前一条消息是否是未配对的assistant with tool_calls
+                    prev_msg = fixed_messages[-1]
+                    if prev_msg["role"] == "assistant" and "tool_calls" in prev_msg:
+                        # 检查是否所有tool_calls都有响应
+                        all_paired = all(
+                            tc["id"] in used_tool_ids 
+                            for tc in prev_msg["tool_calls"]
+                        )
+                        if not all_paired:
+                            # 跳过这个"Please continue"，因为它打断了配对
+                            i += 1
+                            continue
+                
+                # 添加其他正常消息
+                fixed_messages.append(msg)
+                i += 1
+                
+        # 检查是否有未配对的tool_calls，为它们生成占位响应
+        # 这解决了工具等待确认时的配对问题
+        final_messages = []
+        for i, msg in enumerate(fixed_messages):
+            final_messages.append(msg)
+            
+            # 如果是包含tool_calls的assistant消息
+            if msg["role"] == "assistant" and "tool_calls" in msg:
+                # 检查每个tool_call是否有对应的响应
+                for tool_call in msg["tool_calls"]:
+                    tool_id = tool_call["id"]
+                    # 检查下一条消息是否是对应的tool响应
+                    has_response = False
+                    if i + 1 < len(fixed_messages):
+                        next_msg = fixed_messages[i + 1]
+                        if next_msg["role"] == "tool" and next_msg.get("tool_call_id") == tool_id:
+                            has_response = True
+                    
+                    # 如果没有响应，生成占位响应
+                    if not has_response:
+                        placeholder_response = {
+                            "role": "tool",
+                            "tool_call_id": tool_id,
+                            "content": "Tool execution pending or awaiting confirmation"
+                        }
+                        final_messages.append(placeholder_response)
+                        # 记录这个占位响应
+                        if DebugLogger.should_log("DEBUG"):
+                            log_info("OpenAI", f"Generated placeholder response for tool_call_id: {tool_id}")
+        
+        # 调试：打印修复后的消息
+        if DebugLogger.should_log("DEBUG"):
+            log_info("OpenAI", f"修复后的消息数量: {len(final_messages)}")
+            for idx, msg in enumerate(final_messages):
+                role = msg.get("role", "unknown")
+                if "tool_calls" in msg:
+                    log_info("OpenAI", f"  [{idx}] {role} - has tool_calls: {[tc['id'] for tc in msg['tool_calls']]}")
+                elif role == "tool":
+                    log_info("OpenAI", f"  [{idx}] {role} - tool_call_id: {msg.get('tool_call_id', 'none')}")
+                else:
+                    content_preview = str(msg.get("content", ""))[:50]
+                    log_info("OpenAI", f"  [{idx}] {role} - {content_preview}")
+                
+        return final_messages
         
     def _convert_tools_to_openai_format(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """将 Gemini 工具格式转换为 OpenAI 格式"""
@@ -336,7 +465,12 @@ class OpenAIService:
             # 解析参数
             try:
                 args = json.loads(current_function_call["arguments"])
-            except:
+            except Exception as e:
+                from ..utils.debug_logger import log_info
+                log_info("OpenAI", f"🚨 Failed to parse function arguments:")
+                log_info("OpenAI", f"  Function: {current_function_call.get('name', 'unknown')}")
+                log_info("OpenAI", f"  Raw arguments: {repr(current_function_call.get('arguments', ''))}")
+                log_info("OpenAI", f"  Parse error: {e}")
                 args = {}
                 
             result["function_calls"] = [{

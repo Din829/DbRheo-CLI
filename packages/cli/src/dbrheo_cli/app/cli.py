@@ -80,7 +80,10 @@ class DbRheoCLI:
         self.db_config.set_test_config('i18n', i18n_adapter)
         
         # 创建客户端
+        log_info("CLI", f"🔄 Creating new DatabaseClient (previous client ID: {id(self.client) if hasattr(self, 'client') else 'None'})")
         self.client = DatabaseClient(self.db_config)
+        log_info("CLI", f"🔄 New DatabaseClient created with ID: {id(self.client)}")
+        log_info("CLI", f"🔄 New tool_scheduler ID: {id(self.client.tool_scheduler)}")
         self.signal = SimpleAbortSignal()
         
         # 设置工具调度器回调
@@ -388,6 +391,9 @@ class DbRheoCLI:
                 # 重新初始化后端
                 self._init_backend()
                 
+                # 重新初始化处理器以使用新的scheduler
+                self._init_handlers()
+                
                 console.print(f"[green]{_('model_switched', model=model_name)}[/green]")
                 
                 # 显示具体的可用模型
@@ -485,8 +491,51 @@ class DbRheoCLI:
     
     async def _continue_after_confirmation(self):
         """确认后继续处理"""
-        # 等待工具执行完成
-        await asyncio.sleep(0.5)
+        log_info("CLI", "=== _continue_after_confirmation START ===")
+        
+        # 获取当前模型
+        current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
+        log_info("CLI", f"Current model: {current_model}")
+        
+        # 只对需要严格消息配对的模型进行特殊处理
+        model_lower = current_model.lower()
+        needs_strict_pairing = any(model in model_lower for model in ['gpt', 'claude', 'openai', 'sonnet'])
+        
+        if needs_strict_pairing:
+            log_info("CLI", f"Model {current_model} needs strict message pairing, using polling approach")
+            
+            # 对GPT/Claude模型使用轮询确保工具真正完成
+            max_wait = 5.0  # 最多等待5秒
+            poll_interval = 0.1  # 每100ms检查一次
+            waited = 0
+            
+            log_info("CLI", f"Starting polling for tool completion (max {max_wait}s)...")
+            
+            while waited < max_wait:
+                # 检查是否还有未完成的工具
+                active_tools = [
+                    call for call in self.client.tool_scheduler.tool_calls
+                    if call.status in ['scheduled', 'executing', 'validating']
+                ]
+                
+                if not active_tools:
+                    log_info("CLI", f"All tools completed after {waited:.1f}s")
+                    break
+                    
+                log_info("CLI", f"Still have {len(active_tools)} active tools, waiting...")
+                await asyncio.sleep(poll_interval)
+                waited += poll_interval
+            
+            if waited >= max_wait:
+                log_info("CLI", f"Warning: Polling timeout after {max_wait}s, proceeding anyway")
+        else:
+            # Gemini等模型保持原有逻辑
+            wait_time = self._get_model_wait_time(current_model)
+            log_info("CLI", f"Wait time for {current_model}: {wait_time}s")
+            log_info("CLI", f"Starting wait for tool completion...")
+            await asyncio.sleep(wait_time)
+        
+        log_info("CLI", f"Wait completed, proceeding to send 'Please continue.'")
         
         # 显示继续处理的提示
         console.print(f"\n[dim]{_('continuing')}[/dim]")
@@ -496,6 +545,8 @@ class DbRheoCLI:
             # 继续处理时不重置信号（保持中止状态）
             self.in_response = True  # 标记开始接收响应
             tool_calls = []  # 记录工具调用
+            
+            log_info("CLI", "Sending 'Please continue.' to AI")
             
             async for event in self.client.send_message_stream(
                 "Please continue.", self.signal, self.session_id
@@ -525,6 +576,37 @@ class DbRheoCLI:
             console.print(f"[red]{_('error_continuing', error=e)}[/red]")
         finally:
             self.in_response = False  # 重置响应标志
+    
+    def _get_model_wait_time(self, model_name: str) -> float:
+        """
+        根据模型类型返回合适的等待时间
+        
+        Args:
+            model_name: 模型名称
+            
+        Returns:
+            等待时间（秒）
+        """
+        model_lower = model_name.lower()
+        
+        # 模型特性配置 - 易于扩展和维护
+        model_features = {
+            # 需要严格消息配对的模型需要更长等待时间
+            'claude': 1.5,
+            'gpt': 1.5,
+            'openai': 1.5,
+            # Gemini 等支持灵活消息格式的模型使用较短等待时间
+            'gemini': 0.5,
+            # 默认值
+            'default': 0.5
+        }
+        
+        # 匹配模型类型
+        for model_prefix, wait_time in model_features.items():
+            if model_prefix in model_lower:
+                return wait_time
+                
+        return model_features['default']
     
     def cleanup(self):
         """清理资源"""

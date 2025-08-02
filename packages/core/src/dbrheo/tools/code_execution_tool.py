@@ -113,7 +113,7 @@ class CodeExecutionTool(DatabaseTool):
         
         # 构建描述
         lang_descriptions = [f"{lang}({self.LANGUAGE_CONFIG[lang]['description']})" for lang in supported_languages]
-        description = f"Execute code in multiple languages. Supports: {', '.join(lang_descriptions)}. Returns execution results."
+        description = f"Execute code in multiple languages. Supports: {', '.join(lang_descriptions)}. Each execution runs in a fresh environment - variables don't persist between calls. Consider combining operations when needed. Returns execution results."
         
         super().__init__(
             name="execute_code",
