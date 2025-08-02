@@ -130,6 +130,8 @@ class DatabasePromptManager:
 - "让我用shell_execute执行这个命令"
 - "我用execute_code运行这段代码"
 
+调用工具时请使用单个JSON请求，避免在一次调用中发送多个JSON对象。
+
 # 重要：工具取消后的行为
 **当用户取消了工具执行（选择了2/cancel）后，你必须：**
 1. 立即停止所有工具调用计划

@@ -462,16 +462,28 @@ class OpenAIService:
             
         # 处理函数调用完成
         if choice.finish_reason == "tool_calls" and current_function_call:
-            # 解析参数
+            # 解析参数  
             try:
                 args = json.loads(current_function_call["arguments"])
+                from ..utils.debug_logger import log_info
+                log_info("OpenAI", f"✅ Function call parsed successfully:")
+                log_info("OpenAI", f"  Function: {current_function_call.get('name', 'unknown')}")
+                log_info("OpenAI", f"  Raw arguments: {repr(current_function_call.get('arguments', ''))}")
+                log_info("OpenAI", f"  Parsed args: {repr(args)}")
             except Exception as e:
                 from ..utils.debug_logger import log_info
                 log_info("OpenAI", f"🚨 Failed to parse function arguments:")
                 log_info("OpenAI", f"  Function: {current_function_call.get('name', 'unknown')}")
                 log_info("OpenAI", f"  Raw arguments: {repr(current_function_call.get('arguments', ''))}")
                 log_info("OpenAI", f"  Parse error: {e}")
-                args = {}
+                
+                # 尝试从第一个有效的JSON对象中提取参数
+                args = self._extract_first_valid_json(current_function_call["arguments"])
+                if args:
+                    log_info("OpenAI", f"✅ Recovered from malformed JSON: {repr(args)}")
+                else:
+                    log_info("OpenAI", f"❌ Could not recover from malformed JSON")
+                    args = {}
                 
             result["function_calls"] = [{
                 "id": current_function_call["id"],
@@ -480,6 +492,62 @@ class OpenAIService:
             }]
             
         return result if result else None
+    
+    def _extract_first_valid_json(self, text: str) -> Dict[str, Any]:
+        """
+        智能处理多个JSON对象的情况，保持Agent灵活性
+        """
+        if not text or not text.strip():
+            return {}
+            
+        # 提取所有有效的JSON对象
+        json_objects = self._extract_all_json_objects(text)
+        
+        if not json_objects:
+            return {}
+            
+        if len(json_objects) == 1:
+            return json_objects[0]
+            
+        # 多个JSON对象的情况 - 智能处理
+        first_obj = json_objects[0]
+        
+        # 收集其他对象的信息，让Agent了解情况
+        other_info = []
+        for obj in json_objects[1:]:
+            if 'table_name' in obj:
+                other_info.append(obj['table_name'])
+            else:
+                other_info.append('unnamed_table')
+        
+        # 在第一个对象中添加Agent反馈信息
+        first_obj['_agent_feedback'] = f"Multiple table requests detected. Currently processing '{first_obj.get('table_name', 'unknown')}'. Other tables found: {', '.join(other_info)}. Consider separate calls for each table."
+        
+        return first_obj
+    
+    def _extract_all_json_objects(self, text: str) -> list:
+        """提取所有有效的JSON对象"""
+        objects = []
+        brace_count = 0
+        start_pos = -1
+        
+        for i, char in enumerate(text):
+            if char == '{':
+                if start_pos == -1:
+                    start_pos = i
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0 and start_pos != -1:
+                    json_str = text[start_pos:i+1]
+                    try:
+                        obj = json.loads(json_str)
+                        objects.append(obj)
+                    except:
+                        pass
+                    start_pos = -1
+        
+        return objects
         
     def _create_error_chunk(self, error_message: str) -> Dict[str, Any]:
         """创建错误响应块"""
