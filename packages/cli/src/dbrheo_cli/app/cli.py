@@ -394,6 +394,10 @@ class DbRheoCLI:
                 # 重新初始化处理器以使用新的scheduler
                 self._init_handlers()
                 
+                # 保存用户的模型选择偏好（最小侵入性）
+                if hasattr(self.client.config, 'save_user_preference'):
+                    self.client.config.save_user_preference('model', model_name)
+                
                 console.print(f"[green]{_('model_switched', model=model_name)}[/green]")
                 
                 # 显示具体的可用模型

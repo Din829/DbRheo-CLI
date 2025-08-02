@@ -68,13 +68,15 @@ class WorkspaceConfig(ConfigSource):
     def __init__(self, workspace_root: Optional[Path] = None):
         self._config = {}
         self._workspace_root = workspace_root or Path.cwd()
+        
+            
         self._load_workspace_config()
         
     def _load_workspace_config(self):
         """加载工作区配置文件"""
         # 向上查找配置文件
         current = self._workspace_root
-        config_names = [".dbrheo.yaml", ".dbrheo.json", "dbrheo.config.yaml", "dbrheo.config.json"]
+        config_names = ["config.yaml", ".dbrheo.yaml", ".dbrheo.json", "dbrheo.config.yaml", "dbrheo.config.json"]
         
         while current != current.parent:
             for config_name in config_names:
@@ -131,6 +133,49 @@ class UserConfig(ConfigSource):
         
     def get_all(self) -> Dict[str, Any]:
         return self._config.copy()
+    
+    def save_preference(self, key: str, value: Any):
+        """保存用户偏好设置到配置文件（最小侵入性实现）"""
+        # 更新内存中的配置
+        self._config[key] = value
+        
+        # 确定保存路径 - 优先使用已存在的配置文件
+        config_path = None
+        config_paths = [
+            Path.home() / ".config/dbrheo/config.yaml",
+            Path.home() / ".dbrheo/config.yaml",
+        ]
+        
+        
+        # 查找已存在的配置文件
+        for path in config_paths:
+            if path.exists():
+                config_path = path
+                break
+        
+        # 如果没有找到，使用默认路径
+        if not config_path:
+            config_path = config_paths[0]
+            # 确保目录存在
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # 保存配置（保持原有内容，只更新改变的部分）
+        try:
+            # 如果文件存在，先读取现有内容
+            existing_config = {}
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    existing_config = yaml.safe_load(f) or {}
+            
+            # 更新配置
+            existing_config[key] = value
+            
+            # 写回文件
+            with open(config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(existing_config, f, default_flow_style=False, allow_unicode=True)
+        except Exception:
+            # 静默失败，不影响主要功能
+            pass
 
 
 class EnvironmentConfig(ConfigSource):
@@ -354,6 +399,30 @@ class DatabaseConfig:
     def get_max_session_turns(self) -> int:
         """获取最大会话轮次"""
         return self.get("max_session_turns", 100)
+    
+    def save_user_preference(self, key: str, value: Any):
+        """保存用户偏好设置到本地config.yaml（最小侵入性，静默失败）"""
+        try:
+            # 直接保存到项目本地的 config.yaml
+            config_path = Path.cwd() / "config.yaml"
+            
+            # 读取现有配置（如果存在）
+            existing_config = {}
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    existing_config = yaml.safe_load(f) or {}
+            
+            # 更新配置
+            existing_config[key] = value
+            
+            # 写回文件
+            with open(config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(existing_config, f, default_flow_style=False, allow_unicode=True)
+                
+                
+        except Exception:
+            # 静默失败，不影响主要功能
+            pass
         
     def is_debug(self) -> bool:
         """是否处于调试模式"""

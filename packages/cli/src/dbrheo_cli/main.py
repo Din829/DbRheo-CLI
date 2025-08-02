@@ -154,10 +154,25 @@ def main(db_file: Optional[str],
         os.environ[ENV_VARS['ENABLE_LOG']] = 'true'
         log_info("Main", _('log_enabled'))
     
-    # 设置模型
+    # 设置模型（命令行参数优先）
     if model:
         os.environ[ENV_VARS['MODEL']] = model
         log_info("Main", _('model_switched', model=model))
+    elif not os.environ.get(ENV_VARS['MODEL']):
+        # 如果没有命令行参数和环境变量，尝试从配置文件加载
+        try:
+            config_path = Path.cwd() / "config.yaml"
+            if config_path.exists():
+                import yaml
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config_data = yaml.safe_load(f) or {}
+                    saved_model = config_data.get('model')
+                    if saved_model and saved_model != 'gemini-2.5-flash':
+                        os.environ[ENV_VARS['MODEL']] = saved_model
+                        log_info("Main", f"Loaded model from config.yaml: {saved_model}")
+        except Exception:
+            # 静默失败
+            pass
     
     # 创建CLI配置
     cli_config = CLIConfig(

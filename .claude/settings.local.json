@@ -5,7 +5,9 @@
       "Bash(python test:*)",
       "Bash(find:*)",
       "WebFetch(domain:docs.anthropic.com)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

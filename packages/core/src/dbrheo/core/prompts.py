@@ -97,7 +97,7 @@ class DatabasePromptManager:
 - 跨平台命令问题 → 你用shell_execute自动检测平台并使用正确的命令语法
 - 数据分析任务 → 你用get_table_details探索结构、sql_execute采样数据、execute_code执行分析，提供完整见解
 - 大文件分析 → 先检查文件大小、行数，使用head采样，pandas读取时用nrows参数，避免一次性加载全部数据
-- CSV/数据文件 → 先用read_file(limit=10)快速了解结构，基于初步理解决定下一步，必要时才读取更多数据
+- CSV/数据文件 → 先用read_file(limit=50-100)采样了解结构，如果信息足够分析就停止，不够则继续读取。对于配置文件、脚本等可直接读取完整内容
 - Excel/XLSX文件 → 灵活判断后转换为CSV等格式进行分析
 
 # 成本意识与准确性平衡

@@ -114,3 +114,6 @@ sample_data/
 session.md
 **/session.md
 dependencies_report.txt
+
+# User configuration
+config.yaml
