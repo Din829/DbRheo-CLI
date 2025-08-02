@@ -39,7 +39,8 @@ COMMANDS = {
     'CLEAR': ['/clear'],
     'DEBUG': ['/debug'],
     'LANG': ['/lang', '/language'],
-    'MODEL': ['/model']  # 模型切换
+    'MODEL': ['/model'],  # 模型切换
+    'TOKEN': ['/token']   # Token 统计
 }
 
 # 确认关键词

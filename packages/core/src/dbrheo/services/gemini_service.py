@@ -319,6 +319,27 @@ class GeminiService:
                     # 只在有函数调用时添加function_calls字段
                     if function_calls:
                         result["function_calls"] = function_calls
+        
+        # 检查 token 使用信息 - 最小侵入性添加
+        # Gemini API 的 usage_metadata 通常在最后一个 chunk 中
+        if hasattr(chunk, 'usage_metadata') and chunk.usage_metadata:
+            usage = chunk.usage_metadata
+            result["token_usage"] = {
+                "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
+                "completion_tokens": getattr(usage, 'candidates_token_count', 0),
+                "total_tokens": getattr(usage, 'total_token_count', 0)
+            }
+        # 也检查 candidates 中的 usage_metadata
+        elif hasattr(chunk, 'candidates') and chunk.candidates:
+            for candidate in chunk.candidates:
+                if hasattr(candidate, 'usage_metadata') and candidate.usage_metadata:
+                    usage = candidate.usage_metadata
+                    result["token_usage"] = {
+                        "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
+                        "completion_tokens": getattr(usage, 'candidates_token_count', 0),
+                        "total_tokens": getattr(usage, 'total_token_count', 0)
+                    }
+                    break
             
         return result
         

@@ -305,6 +305,8 @@ class DbRheoCLI:
             self._handle_lang_command(cmd)
         elif cmd.startswith(COMMANDS['MODEL'][0]):
             self._handle_model_command(cmd)
+        elif cmd in COMMANDS['TOKEN']:
+            self._handle_token_command()
         else:
             console.print(f"[yellow]{_('unknown_command', command=command)}[/yellow]")
     
@@ -400,6 +402,10 @@ class DbRheoCLI:
                 
                 console.print(f"[green]{_('model_switched', model=model_name)}[/green]")
                 
+                # 检查新模型的 API Key
+                from ..utils.api_key_checker import show_api_key_setup_guide
+                show_api_key_setup_guide(model_name)
+                
                 # 显示具体的可用模型
                 console.print(f"\n[cyan]{_('available_models')}:[/cyan]")
                 console.print(f"  [bold]/model gemini[/bold] → Gemini 2.5 Flash")
@@ -422,6 +428,45 @@ class DbRheoCLI:
             console.print(f"  [bold]/model gpt-mini[/bold] → GPT-4.1 Mini")
             console.print(f"\n[dim]{_('example')}: /model claude[/dim]")
     
+    def _handle_token_command(self):
+        """处理 token 统计命令"""
+        if hasattr(self.client, 'token_statistics'):
+            self._show_token_statistics(self.client.token_statistics)
+        else:
+            console.print(f"[yellow]{_('token_statistics_unavailable')}[/yellow]")
+    
+    def _show_token_statistics(self, stats):
+        """显示 token 统计信息"""
+        summary = stats.get_summary()
+        
+        if summary['total_calls'] == 0:
+            console.print(f"[dim]{_('no_token_usage_yet')}[/dim]")
+            return
+        
+        # 显示标题
+        console.print(f"\n[bold]{_('token_usage_title')}[/bold]")
+        
+        # 显示总计
+        console.print(_('token_usage_total', 
+                       total=summary['total_tokens'],
+                       calls=summary['total_calls']))
+        console.print(_('token_usage_detail', 
+                       prompt=summary['total_prompt_tokens']))
+        console.print(_('token_usage_detail_output', 
+                       completion=summary['total_completion_tokens']))
+        
+        # 按模型显示
+        if summary['by_model']:
+            console.print(f"\n{_('token_usage_by_model')}")
+            for model, model_stats in summary['by_model'].items():
+                console.print(_('token_usage_model_detail',
+                              model=model,
+                              total=model_stats['total_tokens'],
+                              calls=model_stats['calls']))
+        
+        
+        console.print()  # 空行
+    
     def _show_help(self):
         """显示帮助信息"""
         help_text = f"""
@@ -432,6 +477,7 @@ class DbRheoCLI:
   /debug <0-5> - {_('help_debug')}
   /lang [code] - {_('help_lang')}
   /model [name]- {_('help_model')}
+  /token       - {_('help_token')}
   ``` 或 <<<   - {_('help_multiline')}
   ESC         - {_('help_esc')}
   
@@ -618,6 +664,14 @@ class DbRheoCLI:
         
         # 设置运行标志
         self.running = False
+        
+        # 显示 token 统计（如果有的话）
+        if hasattr(self, 'client') and hasattr(self.client, 'token_statistics'):
+            summary = self.client.token_statistics.get_summary()
+            if summary['total_calls'] > 0:
+                # 在退出前显示统计
+                console.print()  # 空行
+                self._show_token_statistics(self.client.token_statistics)
         
         # 保存历史记录
         try:

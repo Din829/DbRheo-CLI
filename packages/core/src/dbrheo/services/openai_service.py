@@ -113,6 +113,7 @@ class OpenAIService:
                 "model": self.model_name,
                 "messages": messages,
                 "stream": True,
+                "stream_options": {"include_usage": True},  # 启用流式响应中的 token 统计
                 **self.default_generation_config
             }
             
@@ -141,6 +142,10 @@ class OpenAIService:
             
             for chunk in stream:
                 chunk_count += 1
+                
+                # 调试：检查每个 chunk 的结构
+                if DebugLogger.should_log("DEBUG"):
+                    log_info("OpenAI", f"Chunk #{chunk_count}: has_usage={hasattr(chunk, 'usage')}, has_choices={bool(chunk.choices)}")
                 
                 if signal and signal.aborted:
                     break
@@ -449,6 +454,22 @@ class OpenAIService:
     ) -> Optional[Dict[str, Any]]:
         """处理 OpenAI 流式 chunk，转换为 Gemini 格式"""
         result = {}
+        
+        # 首先检查是否有 usage 信息（可能在最后一个没有 choices 的 chunk 中）
+        if hasattr(chunk, 'usage') and chunk.usage:
+            usage = chunk.usage
+            token_info = {
+                "prompt_tokens": getattr(usage, 'prompt_tokens', 0),
+                "completion_tokens": getattr(usage, 'completion_tokens', 0),
+                "total_tokens": getattr(usage, 'total_tokens', 0)
+            }
+            result["token_usage"] = token_info
+            # 调试日志
+            from ..utils.debug_logger import log_info
+            log_info("OpenAI", f"Token usage detected: {token_info}")
+            # 如果只有 usage 信息，直接返回
+            if not chunk.choices:
+                return result
         
         if not chunk.choices:
             return None

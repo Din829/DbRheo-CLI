@@ -165,6 +165,30 @@ class I18n:
             'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
             'help_model': '切换AI模型',
             
+            # API Key 相关
+            'api_key_missing': '⚠️  未检测到 {model} 的 API Key',
+            'api_key_setup': '请在 .env 文件中设置以下环境变量：',
+            'api_key_gemini': 'GOOGLE_API_KEY 或 GEMINI_API_KEY',
+            'api_key_claude': 'ANTHROPIC_API_KEY 或 CLAUDE_API_KEY',
+            'api_key_openai': 'OPENAI_API_KEY',
+            'api_key_instructions': '获取 API Key 请访问：',
+            'api_key_gemini_url': 'https://aistudio.google.com/apikey',
+            'api_key_claude_url': 'https://console.anthropic.com/settings/keys',
+            'api_key_openai_url': 'https://platform.openai.com/api-keys',
+            'api_key_reminder': '设置完成后请重启 CLI',
+            
+            # Token 统计相关
+            'token_usage_title': 'Token 使用统计',
+            'token_usage_total': '总计：{total} tokens ({calls} 次调用)',
+            'token_usage_detail': '├─ 输入：{prompt} tokens',
+            'token_usage_detail_output': '└─ 输出：{completion} tokens',
+            'token_usage_by_model': '按模型统计：',
+            'token_usage_model_detail': '  {model}：{total} tokens ({calls} 次调用)',
+            'token_command_hint': '使用 /token 查看当前统计',
+            'help_token': '查看 Token 使用统计',
+            'token_statistics_unavailable': 'Token 统计功能不可用',
+            'no_token_usage_yet': '暂无 Token 使用记录',
+            
             # cli.py 相关
             'esc_abort': '用户按下ESC，中止输出...',
             'traditional_layout': '使用传统布局模式',
@@ -499,6 +523,30 @@ class I18n:
             'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
             'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
             'help_model': 'AIモデルを切り替える',
+            
+            # API Key 関連
+            'api_key_missing': '⚠️  {model} の API Key が検出されませんでした',
+            'api_key_setup': '.env ファイルに以下の環境変数を設定してください：',
+            'api_key_gemini': 'GOOGLE_API_KEY または GEMINI_API_KEY',
+            'api_key_claude': 'ANTHROPIC_API_KEY または CLAUDE_API_KEY',
+            'api_key_openai': 'OPENAI_API_KEY',
+            'api_key_instructions': 'API Key の取得はこちら：',
+            'api_key_gemini_url': 'https://aistudio.google.com/apikey',
+            'api_key_claude_url': 'https://console.anthropic.com/settings/keys',
+            'api_key_openai_url': 'https://platform.openai.com/api-keys',
+            'api_key_reminder': '設定後は CLI を再起動してください',
+            
+            # Token 統計関連
+            'token_usage_title': 'Token 使用統計',
+            'token_usage_total': '合計：{total} tokens ({calls} 回呼び出し)',
+            'token_usage_detail': '├─ 入力：{prompt} tokens',
+            'token_usage_detail_output': '└─ 出力：{completion} tokens',
+            'token_usage_by_model': 'モデル別統計：',
+            'token_usage_model_detail': '  {model}：{total} tokens ({calls} 回)',
+            'token_command_hint': '/token を使用して現在の統計を表示',
+            'help_token': 'Token 使用統計を表示',
+            'token_statistics_unavailable': 'Token 統計機能は使用できません',
+            'no_token_usage_yet': 'まだ Token 使用記録がありません',
             
             # cli.py 相关
             'esc_abort': 'ユーザーがESCを押しました、出力を中止中...',
@@ -1035,6 +1083,30 @@ class I18n:
             'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
             'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
             'help_model': 'Switch AI model',
+            
+            # API Key related
+            'api_key_missing': '⚠️  No API Key detected for {model}',
+            'api_key_setup': 'Please set the following environment variable in .env file:',
+            'api_key_gemini': 'GOOGLE_API_KEY or GEMINI_API_KEY',
+            'api_key_claude': 'ANTHROPIC_API_KEY or CLAUDE_API_KEY',
+            'api_key_openai': 'OPENAI_API_KEY',
+            'api_key_instructions': 'Get your API Key at:',
+            'api_key_gemini_url': 'https://aistudio.google.com/apikey',
+            'api_key_claude_url': 'https://console.anthropic.com/settings/keys',
+            'api_key_openai_url': 'https://platform.openai.com/api-keys',
+            'api_key_reminder': 'Please restart CLI after setup',
+            
+            # Token statistics
+            'token_usage_title': 'Token Usage Statistics',
+            'token_usage_total': 'Total: {total} tokens ({calls} calls)',
+            'token_usage_detail': '├─ Input: {prompt} tokens',
+            'token_usage_detail_output': '└─ Output: {completion} tokens',
+            'token_usage_by_model': 'By Model:',
+            'token_usage_model_detail': '  {model}: {total} tokens ({calls} calls)',
+            'token_command_hint': 'Use /token to view current statistics',
+            'help_token': 'View token usage statistics',
+            'token_statistics_unavailable': 'Token statistics not available',
+            'no_token_usage_yet': 'No token usage recorded yet',
             
             # cli.py 相关
             'esc_abort': 'User pressed ESC, aborting output...',

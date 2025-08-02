@@ -70,6 +70,12 @@ class DatabaseTurn:
             # 处理错误
             if chunk.get('type') == 'error':
                 yield {'type': 'Error', 'value': chunk.get('error', 'Unknown error')}
+            
+            # 处理 token 使用信息 - 新增事件类型
+            if chunk.get('token_usage'):
+                # 添加调试日志
+                DebugLogger.log_turn_event("token_usage", chunk['token_usage'])
+                yield {'type': 'TokenUsage', 'value': chunk['token_usage']}
         
         DebugLogger.log_turn_event("summary", chunk_count)
         

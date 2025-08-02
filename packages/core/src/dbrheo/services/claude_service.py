@@ -148,6 +148,12 @@ class ClaudeService:
             for event in stream:
                 chunk_count += 1
                 
+                # 调试：检查每个事件的类型
+                if DebugLogger.should_log("DEBUG"):
+                    event_type = getattr(event, 'type', 'unknown')
+                    has_usage = hasattr(event, 'usage') or (hasattr(event, 'message') and hasattr(event.message, 'usage'))
+                    log_info("Claude", f"Event #{chunk_count}: type={event_type}, has_usage={has_usage}")
+                
                 if signal and signal.aborted:
                     break
                     
@@ -444,7 +450,19 @@ class ClaudeService:
         # Claude 流式事件类型
         if hasattr(event, 'type'):
             if event.type == 'message_start':
-                # 消息开始，可以忽略
+                # 消息开始 - Claude 在这里提供 usage 信息
+                if hasattr(event, 'message') and hasattr(event.message, 'usage'):
+                    usage = event.message.usage
+                    token_info = {
+                        "prompt_tokens": getattr(usage, 'input_tokens', 0),
+                        "completion_tokens": 0,  # 输出 tokens 在 message_delta 中更新
+                        "total_tokens": getattr(usage, 'input_tokens', 0)
+                    }
+                    result["token_usage"] = token_info
+                    # 调试日志
+                    from ..utils.debug_logger import log_info
+                    log_info("Claude", f"Token usage in message_start: {token_info}")
+                    return result if result else None
                 return None
             elif event.type == 'content_block_start':
                 # 内容块开始 - 检查是否是工具调用
@@ -495,7 +513,22 @@ class ClaudeService:
                     self._current_tool_use = None
                 return result if result else None
             elif event.type == 'message_delta':
-                # 消息增量（停止原因等）
+                # 消息增量 - Claude 在这里更新累积的 token 使用情况
+                if hasattr(event, 'usage'):
+                    usage = event.usage
+                    input_tokens = getattr(usage, 'input_tokens', None)
+                    output_tokens = getattr(usage, 'output_tokens', None)
+                    token_info = {
+                        "prompt_tokens": input_tokens,
+                        "completion_tokens": output_tokens,
+                        "total_tokens": (input_tokens or 0) + (output_tokens or 0)  # Claude 需要手动计算总数
+                    }
+                    result["token_usage"] = token_info
+                    # 调试日志
+                    from ..utils.debug_logger import log_info
+                    log_info("Claude", f"Token usage in message_delta: {token_info}")
+                    return result if result else None
+                    
                 if hasattr(event, 'delta') and hasattr(event.delta, 'stop_reason'):
                     # 消息结束
                     return None

@@ -203,6 +203,11 @@ def main(db_file: Optional[str],
             logo_style="default"  # 使用默认大号版本
         )
         
+        # 检查当前模型的 API Key（第一次启动时）
+        from dbrheo_cli.utils.api_key_checker import show_api_key_setup_guide
+        current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
+        show_api_key_setup_guide(current_model)
+        
         # 运行主循环
         asyncio.run(cli.run())
         

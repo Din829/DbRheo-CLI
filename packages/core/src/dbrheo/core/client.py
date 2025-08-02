@@ -12,6 +12,7 @@ from .chat import DatabaseChat
 from ..utils.debug_logger import DebugLogger, log_info
 from .turn import DatabaseTurn
 from .scheduler import DatabaseToolScheduler
+from .token_statistics import TokenStatistics
 
 
 class DatabaseClient:
@@ -35,6 +36,7 @@ class DatabaseClient:
             on_all_tools_complete=self._on_tools_complete
         )
         self.session_turn_count = 0
+        self.token_statistics = TokenStatistics()  # Token 使用统计
         
     def _on_tools_complete(self, completed_calls):
         """工具执行完成的回调处理"""
@@ -146,7 +148,13 @@ class DatabaseClient:
         # 3. 执行当前Turn（只收集工具调用）
         turn = DatabaseTurn(self.chat, prompt_id)
         async for event in turn.run(request, signal):
-            yield event
+            # 拦截 TokenUsage 事件进行统计
+            if event.get('type') == 'TokenUsage':
+                current_model = self.config.get_model() or "gemini-2.5-flash"
+                self.token_statistics.add_usage(current_model, event['value'])
+                # 不向上传递 TokenUsage 事件，保持向后兼容
+            else:
+                yield event
             
         # 4. 工具执行（如果有待执行的工具）
         if turn.pending_tool_calls:
