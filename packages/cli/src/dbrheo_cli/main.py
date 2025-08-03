@@ -196,8 +196,9 @@ def main(db_file: Optional[str],
             custom_message = _('home_dir_warning')
             
         # 显示完整启动画面
+        from . import __version__
         startup.display(
-            version="0.1.0",
+            version=__version__,
             show_tips=True,
             custom_message=custom_message,
             logo_style="default"  # 使用默认大号版本

@@ -35,7 +35,7 @@ class StartupScreen:
         self.console = console
         self.terminal_width = console.width
         
-    def display(self, version: str = "0.1.0", show_tips: bool = True, 
+    def display(self, version: str = "0.2.0", show_tips: bool = True, 
                 custom_message: Optional[str] = None, logo_style: str = "italic"):
         """
         显示启动画面
@@ -127,7 +127,7 @@ class StartupScreen:
         
 
 
-def create_minimal_startup(console: Console, version: str = "0.1.0"):
+def create_minimal_startup(console: Console, version: str = "0.2.0"):
     """创建最小化的启动信息（用于 --quiet 模式）"""
     console.print(f"[bold blue]DbRheo[/bold blue] v{version}")
 
