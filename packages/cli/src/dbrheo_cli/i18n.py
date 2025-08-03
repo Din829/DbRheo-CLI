@@ -187,8 +187,19 @@ class I18n:
             'token_usage_model_detail': '  {model}：{total} tokens ({calls} 次调用)',
             'token_command_hint': '使用 /token 查看当前统计',
             'help_token': '查看 Token 使用统计',
+            'help_database': '数据库连接帮助',
             'token_statistics_unavailable': 'Token 统计功能不可用',
             'no_token_usage_yet': '暂无 Token 使用记录',
+            
+            # 数据库命令相关
+            'database_help_title': '数据库连接帮助',
+            'database_help_intro': '使用以下格式提供数据库连接信息：',
+            'database_help_direct': '直接连接',
+            'database_help_ssh': 'SSH隧道连接',
+            'database_help_examples': '示例',
+            'database_help_saved': '保存的连接',
+            'database_help_list_saved': '查看保存的连接：发送 "列出保存的数据库连接"',
+            'database_help_load_saved': '加载保存的连接：发送 "加载连接 <别名>"',
             
             # cli.py 相关
             'esc_abort': '用户按下ESC，中止输出...',
@@ -547,8 +558,19 @@ class I18n:
             'token_usage_model_detail': '  {model}：{total} tokens ({calls} 回)',
             'token_command_hint': '/token を使用して現在の統計を表示',
             'help_token': 'Token 使用統計を表示',
+            'help_database': 'データベース接続ヘルプ',
             'token_statistics_unavailable': 'Token 統計機能は使用できません',
             'no_token_usage_yet': 'まだ Token 使用記録がありません',
+            
+            # データベースコマンド関連
+            'database_help_title': 'データベース接続ヘルプ',
+            'database_help_intro': '以下の形式でデータベース接続情報を提供してください：',
+            'database_help_direct': '直接接続',
+            'database_help_ssh': 'SSHトンネル接続',
+            'database_help_examples': '例',
+            'database_help_saved': '保存された接続',
+            'database_help_list_saved': '保存された接続を表示：「保存されたデータベース接続を一覧表示」と送信',
+            'database_help_load_saved': '保存された接続をロード：「接続をロード <エイリアス>」と送信',
             
             # cli.py 相关
             'esc_abort': 'ユーザーがESCを押しました、出力を中止中...',
@@ -1108,8 +1130,19 @@ class I18n:
             'token_usage_model_detail': '  {model}: {total} tokens ({calls} calls)',
             'token_command_hint': 'Use /token to view current statistics',
             'help_token': 'View token usage statistics',
+            'help_database': 'Database connection help',
             'token_statistics_unavailable': 'Token statistics not available',
             'no_token_usage_yet': 'No token usage recorded yet',
+            
+            # Database command related
+            'database_help_title': 'Database Connection Help',
+            'database_help_intro': 'Provide database connection info in the following format:',
+            'database_help_direct': 'Direct Connection',
+            'database_help_ssh': 'SSH Tunnel Connection',
+            'database_help_examples': 'Examples',
+            'database_help_saved': 'Saved Connections',
+            'database_help_list_saved': 'View saved connections: send "list saved database connections"',
+            'database_help_load_saved': 'Load saved connection: send "load connection <alias>"',
             
             # cli.py 相关
             'esc_abort': 'User pressed ESC, aborting output...',

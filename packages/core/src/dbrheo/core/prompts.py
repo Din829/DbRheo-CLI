@@ -42,9 +42,11 @@ class DatabasePromptManager:
             # 默认系统提示词
             base_prompt = self._get_default_system_prompt()
             
-        # 2. 添加当前时间（东京时间）
+        # 2. 添加当前时间（东京时间）和系统信息
         tokyo_time = datetime.datetime.now(TOKYO_TZ)
+        import platform
         time_suffix = f"\n\nCurrent Tokyo time: {tokyo_time.strftime('%Y-%m-%d %H:%M:%S JST')}"
+        time_suffix += f"\nSystem: {platform.system()} {platform.release()}"
         
         # 3. 添加语言提示
         lang_suffix = ""
@@ -100,6 +102,12 @@ class DatabasePromptManager:
 - CSV/数据文件 → 先用read_file(limit=50-100)采样了解结构，如果信息足够分析就停止，不够则继续读取。对于配置文件、脚本等可直接读取完整内容
 - Excel/XLSX文件 → 灵活判断后转换为CSV等格式进行分析
 
+# 数据库连接智能处理
+- **本地vs远程识别** → localhost/127.0.0.1是本地，其他IP是远程（远程常需SSH隧道）
+- **连接失败分析** → 远程连接失败时，主动建议SSH隧道：`ssh_tunnel={"ssh_host":"...", "ssh_user":"...", "ssh_key_file":"..."}`
+- **信息收集** → 缺少信息时简洁询问：数据库在哪？需要SSH吗？有密钥文件吗？
+- **配置管理** → 成功后用action="save"保存，下次用action="load"快速连接
+
 # 成本意识与准确性平衡
 - 面对大数据量时要聪明，不要蛮力 → 思考：能用聚合查询解决吗？采样分析够准确吗？
 - 准确性永远是第一位 → 但准确不等于"获取所有数据"，而是"获得正确的洞察"
@@ -123,12 +131,18 @@ class DatabasePromptManager:
 
 # 工具调用行为
 每次使用工具前，简要说明你的意图，例如：
+- "让我用database_connect建立数据库连接"
 - "让我用get_table_details检查数据库中的表结构"
 - "我来用sql_execute执行这个查询看看结果" 
 - "让我用read_file读取这个文件内容"
 - "我用web_search搜索相关资料..."
 - "让我用shell_execute执行这个命令"
 - "我用execute_code运行这段代码"
+
+# 数据库连接示例
+- 本地：`database_connect(connection_string="mysql://root:pass@localhost/db")`
+- 远程+SSH：`database_connect(connection_string="mysql://root:pass@localhost/db", ssh_tunnel={"ssh_host":"52.192.50.251", "ssh_user":"ec2-user", "ssh_key_file":"path/to/key.pem"})`
+- 保存/加载：`action="save"`保存成功连接，`action="load"`快速重连
 
 调用工具时请使用单个JSON请求，避免在一次调用中发送多个JSON对象。
 

@@ -117,3 +117,23 @@ dependencies_report.txt
 
 # User configuration
 config.yaml
+
+# DbRheo connection configurations
+.dbrheo/
+# 但保留示例配置文件
+!.dbrheo/connections.yaml.example
+
+# SSH keys and certificates (security)
+*.pem
+*.key
+*.crt
+*.cer
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# Database credentials and sensitive configs
+**/credentials.yaml
+**/secrets.yaml
+**/passwords.txt

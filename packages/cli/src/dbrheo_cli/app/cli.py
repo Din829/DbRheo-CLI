@@ -310,6 +310,8 @@ class DbRheoCLI:
             self._handle_model_command(cmd)
         elif cmd in COMMANDS['TOKEN']:
             self._handle_token_command()
+        elif cmd in COMMANDS['DATABASE']:
+            self._handle_database_command()
         else:
             console.print(f"[yellow]{_('unknown_command', command=command)}[/yellow]")
     
@@ -470,6 +472,36 @@ class DbRheoCLI:
         
         console.print()  # 空行
     
+    def _handle_database_command(self):
+        """处理数据库连接命令"""
+        # 显示数据库连接帮助信息
+        db_help_text = f"""
+[bold]{_('database_help_title', default='数据库连接帮助')}:[/bold]
+
+{_('database_help_intro', default='使用以下格式提供数据库连接信息：')}
+
+[bold]{_('database_help_direct', default='直接连接')}:[/bold]
+  host port user password database_name
+
+[bold]{_('database_help_ssh', default='SSH隧道连接')}:[/bold]
+  host port user password database_name ssh_host ssh_user ssh_key_path [ssh_port]
+
+[bold]{_('database_help_examples', default='示例')}:[/bold]
+  [dim]# 直接连接到本地MySQL[/dim]
+  localhost 3306 root mypassword mydb
+  
+  [dim]# 通过SSH隧道连接[/dim]
+  localhost 3306 root mypassword mydb bastion.com ec2-user ~/.ssh/key.pem
+  
+  [dim]# 指定SSH端口[/dim]
+  localhost 3306 root mypassword mydb bastion.com ec2-user ~/.ssh/key.pem 2222
+
+[bold]{_('database_help_saved', default='保存的连接')}:[/bold]
+  {_('database_help_list_saved', default='查看保存的连接：发送 "列出保存的数据库连接"')}
+  {_('database_help_load_saved', default='加载保存的连接：发送 "加载连接 <别名>"')}
+"""
+        console.print(db_help_text)
+    
     def _show_help(self):
         """显示帮助信息"""
         help_text = f"""
@@ -481,6 +513,7 @@ class DbRheoCLI:
   /lang [code] - {_('help_lang')}
   /model [name]- {_('help_model')}
   /token       - {_('help_token')}
+  /database    - {_('help_database', default='数据库连接帮助')}
   ``` 或 <<<   - {_('help_multiline')}
   ESC         - {_('help_esc')}
   

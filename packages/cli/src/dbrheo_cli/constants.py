@@ -40,7 +40,8 @@ COMMANDS = {
     'DEBUG': ['/debug'],
     'LANG': ['/lang', '/language'],
     'MODEL': ['/model'],  # 模型切换
-    'TOKEN': ['/token']   # Token 统计
+    'TOKEN': ['/token'],  # Token 统计
+    'DATABASE': ['/database', '/db']  # 数据库连接
 }
 
 # 确认关键词
