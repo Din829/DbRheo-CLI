@@ -37,6 +37,8 @@ class DatabaseClient:
         )
         self.session_turn_count = 0
         self.token_statistics = TokenStatistics()  # Token 使用统计
+        # 缓存的JSON生成服务（最小侵入性优化）
+        self._json_llm_service = None
         
     def _on_tools_complete(self, completed_calls):
         """工具执行完成的回调处理"""
@@ -150,6 +152,15 @@ class DatabaseClient:
         async for event in turn.run(request, signal):
             # 拦截 TokenUsage 事件进行统计
             if event.get('type') == 'TokenUsage':
+                # 详细调试
+                from ..utils.debug_logger import log_info
+                log_info("Client", f"📊 TOKEN STATISTICS - Adding usage to statistics:")
+                log_info("Client", f"   - Turn count: {self.session_turn_count}")
+                log_info("Client", f"   - Prompt ID: {prompt_id}")
+                log_info("Client", f"   - prompt_tokens: {event['value'].get('prompt_tokens', 0)}")
+                log_info("Client", f"   - completion_tokens: {event['value'].get('completion_tokens', 0)}")
+                log_info("Client", f"   - total_tokens: {event['value'].get('total_tokens', 0)}")
+                
                 current_model = self.config.get_model() or "gemini-2.5-flash"
                 self.token_statistics.add_usage(current_model, event['value'])
                 # 不向上传递 TokenUsage 事件，保持向后兼容
@@ -274,6 +285,7 @@ class DatabaseClient:
                     
                     DebugLogger.log_client_event("recursion_start", None)
                     
+                    log_info("Client", f"🔄 RECURSION #2 - After collecting tool responses")
                     # 按照设计文档，工具执行后应该添加 "Please continue." 让模型继续
                     # 这符合 Gemini CLI 的设计模式
                     async for event in self.send_message_stream(
@@ -332,11 +344,13 @@ class DatabaseClient:
         """
         from ..services.llm_factory import create_llm_service
         
-        # 创建临时的LLM服务（根据配置自动选择）
-        gemini_service = create_llm_service(self.config)
+        # 使用缓存的LLM服务（最小侵入性优化）
+        if self._json_llm_service is None:
+            log_info("Client", "Creating JSON LLM service (first time only)")
+            self._json_llm_service = create_llm_service(self.config)
         
         # 调用服务生成JSON
-        return await gemini_service.generate_json(
+        return await self._json_llm_service.generate_json(
             contents,
             schema,
             signal,

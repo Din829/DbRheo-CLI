@@ -24,6 +24,11 @@ class GeminiService:
     def __init__(self, config: DatabaseConfig):
         self.config = config
         self._setup_api()
+        # 缓存的模型实例（避免重复创建）
+        self._cached_model = None
+        self._cached_model_config = None
+        # Token去重机制
+        self._stream_token_tracker = None
         
     def _setup_api(self):
         """设置Gemini API"""
@@ -79,40 +84,25 @@ class GeminiService:
         完全对齐Gemini CLI的API调用方式
         """
         try:
+            # 调试：打印调用信息
+            from ..utils.debug_logger import log_info
+            log_info("Gemini", f"send_message_stream called")
+            log_info("Gemini", f"History length: {len(contents)} messages")
+            log_info("Gemini", f"System instruction length: {len(system_instruction) if system_instruction else 0} chars")
+            log_info("Gemini", f"Tools count: {len(tools) if tools else 0}")
+            
+            # 计算历史内容的总字符数
+            total_chars = sum(
+                sum(len(part.get('text', '')) for part in msg.get('parts', []))
+                for msg in contents
+            )
+            log_info("Gemini", f"Total history content: {total_chars} chars")
+            
             # 准备请求参数
             request_contents = self._prepare_contents(contents)
             
-            # 创建模型实例（每次调用都创建新的）
-            model_config = {}
-            if system_instruction:
-                model_config['system_instruction'] = system_instruction
-            
-            # 准备工具配置
-            # 注意：Gemini API 不支持同时使用 code_execution 和 function_declarations
-            enable_code_execution = self.config.get("enable_code_execution", False)
-            
-            if enable_code_execution and tools:
-                # 如果同时启用了代码执行和函数工具，优先使用函数工具
-                # 代码执行将通过对话中的代码块实现
-                print("[INFO Gemini] Code execution enabled but using function tools - code will be executed in conversation")
-                model_config['tools'] = [{
-                    "function_declarations": tools
-                }]
-            elif enable_code_execution and not tools:
-                # 只有代码执行，没有函数工具
-                model_config['tools'] = [{
-                    "code_execution": {}
-                }]
-            elif tools:
-                # 只有函数工具
-                model_config['tools'] = [{
-                    "function_declarations": tools
-                }]
-                
-            model = genai.GenerativeModel(
-                model_name=self.model_name,
-                **model_config
-            )
+            # 获取或创建缓存的模型实例
+            model = self._get_or_create_model(system_instruction, tools)
             
             # 使用默认的生成配置
             generation_config = self.default_generation_config.copy()
@@ -138,8 +128,13 @@ class GeminiService:
             
             # 处理流式响应
             chunk_count = 0
+            self._chunk_count = 0  # 重置chunk计数器
+            self._stream_token_tracker = None  # 重置token跟踪器
+            final_chunk = None  # 跟踪最后一个chunk
+            
             for chunk in response:
                 chunk_count += 1
+                final_chunk = chunk  # 保存每个chunk，最后一个就是最终chunk
                 
                 if signal and signal.aborted:
                     break
@@ -147,6 +142,17 @@ class GeminiService:
                 processed = self._process_chunk(chunk)
                 DebugLogger.log_gemini_chunk(chunk_count, chunk, processed)
                 yield processed
+                
+            # 调试：流结束时的总结
+            log_info("Gemini", f"🔍 TOKEN DEBUG - Stream ended. Total chunks: {chunk_count}")
+            
+            # 在流结束后，发送最终的token统计
+            if self._stream_token_tracker and final_chunk:
+                log_info("Gemini", f"🎯 FINAL TOKEN USAGE - Sending final token statistics")
+                yield {
+                    "token_usage": self._stream_token_tracker,
+                    "_final_token_report": True  # 标记这是最终报告
+                }
                 
         except Exception as e:
             # 错误处理 - 记录完整错误信息
@@ -281,6 +287,11 @@ class GeminiService:
         """处理流式响应块"""
         result = {}
         
+        # 调试：记录chunk序号（需要在调用处传入）
+        if not hasattr(self, '_chunk_count'):
+            self._chunk_count = 0
+        self._chunk_count += 1
+        
         # 安全地尝试获取文本内容
         # 注意：当响应包含 function_call 时，访问 chunk.text 会抛出异常
         try:
@@ -324,21 +335,49 @@ class GeminiService:
         # Gemini API 的 usage_metadata 通常在最后一个 chunk 中
         if hasattr(chunk, 'usage_metadata') and chunk.usage_metadata:
             usage = chunk.usage_metadata
-            result["token_usage"] = {
+            token_info = {
                 "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
                 "completion_tokens": getattr(usage, 'candidates_token_count', 0),
                 "total_tokens": getattr(usage, 'total_token_count', 0)
             }
+            
+            # 更新跟踪器（总是保存最新的值）
+            self._stream_token_tracker = token_info
+            
+            # 详细调试信息
+            from ..utils.debug_logger import log_info
+            log_info("Gemini", f"🔍 TOKEN DEBUG - Chunk #{self._chunk_count} has usage_metadata:")
+            log_info("Gemini", f"   - prompt_tokens: {token_info['prompt_tokens']}")
+            log_info("Gemini", f"   - completion_tokens: {token_info['completion_tokens']}")
+            log_info("Gemini", f"   - total_tokens: {token_info['total_tokens']}")
+            log_info("Gemini", f"   - From chunk.usage_metadata directly")
+            log_info("Gemini", f"   - 🚫 NOT sending token event (will send at stream end)")
+            
+            # 不再在这里返回token_usage，等待流结束
         # 也检查 candidates 中的 usage_metadata
         elif hasattr(chunk, 'candidates') and chunk.candidates:
-            for candidate in chunk.candidates:
+            for idx, candidate in enumerate(chunk.candidates):
                 if hasattr(candidate, 'usage_metadata') and candidate.usage_metadata:
                     usage = candidate.usage_metadata
-                    result["token_usage"] = {
+                    token_info = {
                         "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
                         "completion_tokens": getattr(usage, 'candidates_token_count', 0),
                         "total_tokens": getattr(usage, 'total_token_count', 0)
                     }
+                    
+                    # 更新跟踪器
+                    self._stream_token_tracker = token_info
+                    
+                    # 详细调试信息
+                    from ..utils.debug_logger import log_info
+                    log_info("Gemini", f"🔍 TOKEN DEBUG - Chunk #{self._chunk_count} has usage_metadata in candidate[{idx}]:")
+                    log_info("Gemini", f"   - prompt_tokens: {token_info['prompt_tokens']}")
+                    log_info("Gemini", f"   - completion_tokens: {token_info['completion_tokens']}")
+                    log_info("Gemini", f"   - total_tokens: {token_info['total_tokens']}")
+                    log_info("Gemini", f"   - From chunk.candidates[{idx}].usage_metadata")
+                    log_info("Gemini", f"   - 🚫 NOT sending token event (will send at stream end)")
+                    
+                    # 不再在这里返回token_usage
                     break
             
         return result
@@ -350,3 +389,56 @@ class GeminiService:
             "error": error_message,
             "text": f"Error: {error_message}"
         }
+    
+    def _get_or_create_model(
+        self, 
+        system_instruction: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None
+    ) -> genai.GenerativeModel:
+        """
+        获取或创建缓存的模型实例
+        只有在配置改变时才重新创建
+        """
+        # 构建当前配置
+        model_config = {}
+        if system_instruction:
+            model_config['system_instruction'] = system_instruction
+            
+        # 准备工具配置
+        enable_code_execution = self.config.get("enable_code_execution", False)
+        
+        if enable_code_execution and tools:
+            # 如果同时启用了代码执行和函数工具，优先使用函数工具
+            print("[INFO Gemini] Code execution enabled but using function tools - code will be executed in conversation")
+            model_config['tools'] = [{
+                "function_declarations": tools
+            }]
+        elif enable_code_execution and not tools:
+            # 只有代码执行，没有函数工具
+            model_config['tools'] = [{
+                "code_execution": {}
+            }]
+        elif tools:
+            # 只有函数工具
+            model_config['tools'] = [{
+                "function_declarations": tools
+            }]
+        
+        # 检查配置是否改变
+        config_changed = (
+            self._cached_model is None or 
+            self._cached_model_config != model_config
+        )
+        
+        # 如果配置改变或没有缓存的模型，创建新的
+        if config_changed:
+            self._cached_model = genai.GenerativeModel(
+                model_name=self.model_name,
+                **model_config
+            )
+            self._cached_model_config = model_config.copy()
+            from ..utils.debug_logger import log_info
+            log_info("Gemini", "Created new GenerativeModel instance with cached config")
+        
+        return self._cached_model
+    

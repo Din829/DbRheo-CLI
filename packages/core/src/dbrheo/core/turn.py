@@ -73,6 +73,12 @@ class DatabaseTurn:
             
             # 处理 token 使用信息 - 新增事件类型
             if chunk.get('token_usage'):
+                # 详细调试信息
+                from ..utils.debug_logger import log_info
+                log_info("Turn", f"🔴 TOKEN EVENT - Turn {self.prompt_id} emitting TokenUsage event:")
+                log_info("Turn", f"   - prompt_tokens: {chunk['token_usage'].get('prompt_tokens', 0)}")
+                log_info("Turn", f"   - completion_tokens: {chunk['token_usage'].get('completion_tokens', 0)}")
+                log_info("Turn", f"   - total_tokens: {chunk['token_usage'].get('total_tokens', 0)}")
                 # 添加调试日志
                 DebugLogger.log_turn_event("token_usage", chunk['token_usage'])
                 yield {'type': 'TokenUsage', 'value': chunk['token_usage']}

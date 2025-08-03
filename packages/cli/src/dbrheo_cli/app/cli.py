@@ -86,6 +86,9 @@ class DbRheoCLI:
         log_info("CLI", f"🔄 New tool_scheduler ID: {id(self.client.tool_scheduler)}")
         self.signal = SimpleAbortSignal()
         
+        # 将client引用保存到config中（供token警告功能使用）
+        self.config._client = self.client
+        
         # 设置工具调度器回调
         self._setup_scheduler_callbacks()
     

@@ -39,6 +39,11 @@ class DatabaseChat:
         # 工具注册表（每个Chat实例都有自己的工具上下文）
         self.tool_registry = None
         
+        # 缓存的LLM服务（最小侵入性优化）
+        self._llm_service = None
+        self._tools = None  # 缓存工具声明
+        self._system_prompt = None  # 缓存系统提示词
+        
     def get_history(self, curated: bool = False) -> List[Content]:
         """
         获取历史记录 - 与Gemini CLI完全一致
@@ -248,12 +253,23 @@ class DatabaseChat:
         from ..services.llm_factory import create_llm_service
         from ..tools.registry import DatabaseToolRegistry
         
-        # 创建 LLM 服务（根据配置自动选择）
-        gemini_service = create_llm_service(self.config)
-        
-        # 获取所有可用工具的函数声明
-        tool_registry = DatabaseToolRegistry(self.config)
-        tools = tool_registry.get_function_declarations()
+        # 首次调用时初始化缓存的服务和工具（最小侵入性优化）
+        if self._llm_service is None:
+            log_info("Chat", "Initializing LLM service and tools (first time only)")
+            # 创建 LLM 服务（根据配置自动选择）
+            self._llm_service = create_llm_service(self.config)
+            
+            # 获取所有可用工具的函数声明
+            tool_registry = DatabaseToolRegistry(self.config)
+            self._tools = tool_registry.get_function_declarations()
+            log_info("Chat", f"Loaded {len(self._tools)} tools")
+            
+            # 获取系统提示词
+            prompt_manager = DatabasePromptManager()
+            self._system_prompt = prompt_manager.get_core_system_prompt()
+            log_info("Chat", f"System prompt length: {len(self._system_prompt)} chars")
+        else:
+            log_info("Chat", "Using cached LLM service")
         
         # 准备请求内容
         if isinstance(request, str):
@@ -283,18 +299,37 @@ class DatabaseChat:
         # 发送消息并获取流式响应
         full_history = self.get_history()
         
+        # 调试：显示历史总体信息
+        total_history_chars = sum(
+            sum(len(part.get('text', '')) for part in msg.get('parts', []))
+            for msg in full_history
+        )
+        log_info("Chat", f"📋 HISTORY ANALYSIS:")
+        log_info("Chat", f"   - Total messages: {len(full_history)}")
+        log_info("Chat", f"   - Total characters: {total_history_chars}")
+        log_info("Chat", f"   - Message breakdown:")
+        for i, msg in enumerate(full_history):
+            msg_chars = sum(len(part.get('text', '')) for part in msg.get('parts', []))
+            msg_preview = ''
+            if msg.get('parts') and len(msg['parts']) > 0:
+                first_part = msg['parts'][0]
+                if 'text' in first_part:
+                    msg_preview = first_part['text'][:30].replace('\n', ' ')
+                elif 'function_call' in first_part:
+                    msg_preview = f"[function_call: {first_part['function_call'].get('name', 'unknown')}]"
+                elif 'function_response' in first_part or 'functionResponse' in first_part:
+                    msg_preview = "[function_response]"
+            log_info("Chat", f"     [{i}] {msg['role']}: {msg_chars} chars - {msg_preview}...")
+        
         # 使用服务发送消息，包含工具声明
         response_parts = []
         
-        # 获取系统提示词
-        prompt_manager = DatabasePromptManager()
-        system_prompt = prompt_manager.get_core_system_prompt()
-        
         # 获取同步生成器
-        sync_generator = gemini_service.send_message_stream(
+        log_info("Chat", f"Calling send_message_stream with history: {len(full_history)} messages")
+        sync_generator = self._llm_service.send_message_stream(
             full_history,
-            tools=tools,  # 提供工具给AI自主选择
-            system_instruction=system_prompt  # 使用DbRheo系统提示词
+            tools=self._tools,  # 提供工具给AI自主选择
+            system_instruction=self._system_prompt  # 使用DbRheo系统提示词
         )
         
         # 将同步生成器转换为异步生成器

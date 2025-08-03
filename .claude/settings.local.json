@@ -7,7 +7,8 @@
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(pip install:*)",
       "Bash(python3:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(python -m mypy:*)"
     ],
     "deny": []
   }

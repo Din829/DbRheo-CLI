@@ -32,6 +32,21 @@ class TokenStatistics:
             completion_tokens=usage_data.get('completion_tokens', 0),
             total_tokens=usage_data.get('total_tokens', 0)
         )
+        
+        # 详细调试
+        from ..utils.debug_logger import log_info
+        log_info("TokenStats", f"📦 ADDING RECORD #{len(self.records) + 1}:")
+        log_info("TokenStats", f"   - Model: {model}")
+        log_info("TokenStats", f"   - prompt_tokens: {record.prompt_tokens}")
+        log_info("TokenStats", f"   - completion_tokens: {record.completion_tokens}")
+        log_info("TokenStats", f"   - total_tokens: {record.total_tokens}")
+        log_info("TokenStats", f"   - Timestamp: {record.timestamp.strftime('%H:%M:%S.%f')[:-3]}")
+        
+        # 显示当前累计
+        current_total = sum(r.total_tokens or 0 for r in self.records)
+        log_info("TokenStats", f"   - Running total BEFORE: {current_total}")
+        log_info("TokenStats", f"   - Running total AFTER: {current_total + (record.total_tokens or 0)}")
+        
         self.records.append(record)
     
     def get_summary(self) -> Dict[str, Any]:

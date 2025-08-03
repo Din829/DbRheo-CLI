@@ -131,6 +131,7 @@ class I18n:
             'multiline_mode_hint': '进入多行输入模式，再次输入 ``` 或 <<< 结束',
             'startup_tips_title': '使用提示:',
             'input_halfwidth_hint': '（日语系统请输入半角数字）',
+            'token_usage_warning': 'Token使用量较高 ({tokens:,})。建议开启新会话。',
             
             # 工具执行消息
             'tool_executing': '执行工具: {tool_name}',
@@ -490,6 +491,7 @@ class I18n:
             'multiline_mode_hint': '複数行入力モードに入りました、再度 ``` または <<< で終了',
             'startup_tips_title': '使用のヒント:',
             'input_halfwidth_hint': '（半角数字で入力してください）',
+            'token_usage_warning': 'Token使用量が高い ({tokens:,})。新しいセッションを開始することをお勧めします。',
             
             # 工具执行消息
             'tool_executing': 'ツール実行中: {tool_name}',
@@ -1050,6 +1052,7 @@ class I18n:
             'multiline_mode_hint': 'Entering multiline input mode, type ``` or <<< again to finish',
             'startup_tips_title': 'Tips:',
             'input_halfwidth_hint': '(Please enter half-width numbers for Japanese systems)',
+            'token_usage_warning': 'Token usage high ({tokens:,}). Consider starting a new session.',
             
             # 工具执行消息
             'tool_executing': 'Executing tool: {tool_name}',

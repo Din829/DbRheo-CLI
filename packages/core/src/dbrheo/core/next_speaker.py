@@ -44,6 +44,9 @@ async def check_next_speaker(
        - User回答：向用户提出了需要回答的问题
        - User输入：完成当前任务，等待新指令
     """
+    # 调试
+    from ..utils.debug_logger import log_info
+    log_info("NextSpeaker", f"🤔 CHECK_NEXT_SPEAKER called")
     
     # 1. 特殊情况优先处理（与Gemini CLI逻辑一致）
     curated_history = chat.get_history(True)
