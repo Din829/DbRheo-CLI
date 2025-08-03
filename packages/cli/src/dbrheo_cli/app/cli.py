@@ -460,6 +460,11 @@ class DbRheoCLI:
         console.print(_('token_usage_detail_output', 
                        completion=summary['total_completion_tokens']))
         
+        # 如果有缓存，显示缓存信息
+        if summary.get('total_cached_tokens', 0) > 0:
+            original_prompt = summary.get('original_prompt_tokens', summary['total_prompt_tokens'])
+            console.print(f"[dim]  (原始输入: {original_prompt} tokens, 缓存: {summary['total_cached_tokens']} tokens)[/dim]")
+        
         # 按模型显示
         if summary['by_model']:
             console.print(f"\n{_('token_usage_by_model')}")
@@ -468,6 +473,9 @@ class DbRheoCLI:
                               model=model,
                               total=model_stats['total_tokens'],
                               calls=model_stats['calls']))
+                # 如果有缓存，显示缓存信息
+                if model_stats.get('cached_tokens', 0) > 0:
+                    console.print(f"[dim]    缓存: {model_stats['cached_tokens']} tokens[/dim]")
         
         
         console.print()  # 空行

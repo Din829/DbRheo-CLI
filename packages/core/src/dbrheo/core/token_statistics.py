@@ -16,6 +16,7 @@ class TokenUsageRecord:
     prompt_tokens: Optional[int]
     completion_tokens: Optional[int]
     total_tokens: Optional[int]
+    cached_tokens: Optional[int] = 0  # 新增：缓存的token数量
     
     
 @dataclass 
@@ -30,22 +31,35 @@ class TokenStatistics:
             model=model,
             prompt_tokens=usage_data.get('prompt_tokens', 0),
             completion_tokens=usage_data.get('completion_tokens', 0),
-            total_tokens=usage_data.get('total_tokens', 0)
+            total_tokens=usage_data.get('total_tokens', 0),
+            cached_tokens=usage_data.get('cached_tokens', 0)  # 新增
         )
         
         # 详细调试
         from ..utils.debug_logger import log_info
-        log_info("TokenStats", f"📦 ADDING RECORD #{len(self.records) + 1}:")
+        log_info("TokenStats", f"ADDING RECORD #{len(self.records) + 1}:")
         log_info("TokenStats", f"   - Model: {model}")
-        log_info("TokenStats", f"   - prompt_tokens: {record.prompt_tokens}")
+        
+        # 计算实际计费的tokens
+        billable_prompt_tokens = record.prompt_tokens - record.cached_tokens
+        billable_total_tokens = billable_prompt_tokens + record.completion_tokens
+        
+        log_info("TokenStats", f"   - prompt_tokens: {billable_prompt_tokens} (original: {record.prompt_tokens}, cached: {record.cached_tokens})")
         log_info("TokenStats", f"   - completion_tokens: {record.completion_tokens}")
-        log_info("TokenStats", f"   - total_tokens: {record.total_tokens}")
+        log_info("TokenStats", f"   - total_tokens: {billable_total_tokens} (original: {record.total_tokens})")
+        
+        if record.cached_tokens > 0:
+            save_rate = record.cached_tokens / record.prompt_tokens * 100
+            log_info("TokenStats", f"   - cache_rate: {save_rate:.1f}%")
+        
         log_info("TokenStats", f"   - Timestamp: {record.timestamp.strftime('%H:%M:%S.%f')[:-3]}")
         
-        # 显示当前累计
-        current_total = sum(r.total_tokens or 0 for r in self.records)
-        log_info("TokenStats", f"   - Running total BEFORE: {current_total}")
-        log_info("TokenStats", f"   - Running total AFTER: {current_total + (record.total_tokens or 0)}")
+        # 显示当前累计（实际计费）
+        current_billable = sum((r.total_tokens or 0) - (r.cached_tokens or 0) for r in self.records)
+        new_billable = current_billable + billable_total_tokens
+        
+        log_info("TokenStats", f"   - Running billable total BEFORE: {current_billable}")
+        log_info("TokenStats", f"   - Running billable total AFTER: {new_billable}")
         
         self.records.append(record)
     
@@ -57,11 +71,14 @@ class TokenStatistics:
                 'total_prompt_tokens': 0,
                 'total_completion_tokens': 0,
                 'total_tokens': 0,
+                'total_cached_tokens': 0,
                 'by_model': {}
             }
         
-        # 计算总计 - 处理可能的 None 值
+        # 计算总计 - 减去缓存的tokens
         total_prompt = sum(r.prompt_tokens or 0 for r in self.records)
+        total_cached = sum(r.cached_tokens or 0 for r in self.records)
+        total_billable_prompt = total_prompt - total_cached
         total_completion = sum(r.completion_tokens or 0 for r in self.records)
         
         # 按模型分组统计
@@ -72,18 +89,24 @@ class TokenStatistics:
                     'calls': 0,
                     'prompt_tokens': 0,
                     'completion_tokens': 0,
-                    'total_tokens': 0
+                    'total_tokens': 0,
+                    'cached_tokens': 0
                 }
             by_model[record.model]['calls'] += 1
-            by_model[record.model]['prompt_tokens'] += record.prompt_tokens or 0
+            # 计算实际计费的prompt tokens
+            billable_prompt = (record.prompt_tokens or 0) - (record.cached_tokens or 0)
+            by_model[record.model]['prompt_tokens'] += billable_prompt
             by_model[record.model]['completion_tokens'] += record.completion_tokens or 0
-            by_model[record.model]['total_tokens'] += record.total_tokens or 0
+            by_model[record.model]['total_tokens'] += billable_prompt + (record.completion_tokens or 0)
+            by_model[record.model]['cached_tokens'] += record.cached_tokens or 0
         
         return {
             'total_calls': len(self.records),
-            'total_prompt_tokens': total_prompt,
+            'total_prompt_tokens': total_billable_prompt,
             'total_completion_tokens': total_completion,
-            'total_tokens': total_prompt + total_completion,
+            'total_tokens': total_billable_prompt + total_completion,
+            'total_cached_tokens': total_cached,
+            'original_prompt_tokens': total_prompt,  # 保留原始值供参考
             'by_model': by_model
         }
     
@@ -110,6 +133,7 @@ class TokenStatistics:
                     break
             
             if model_pricing:
+                # 使用已经减去缓存的实际计费tokens
                 input_cost = (stats['prompt_tokens'] / 1_000_000) * model_pricing['input']
                 output_cost = (stats['completion_tokens'] / 1_000_000) * model_pricing['output']
                 model_cost = input_cost + output_cost
@@ -117,7 +141,8 @@ class TokenStatistics:
                 cost_by_model[model] = {
                     'input_cost': input_cost,
                     'output_cost': output_cost,
-                    'total_cost': model_cost
+                    'total_cost': model_cost,
+                    'cached_tokens': stats.get('cached_tokens', 0)
                 }
                 total_cost += model_cost
         

@@ -463,10 +463,26 @@ class OpenAIService:
                 "completion_tokens": getattr(usage, 'completion_tokens', 0),
                 "total_tokens": getattr(usage, 'total_tokens', 0)
             }
+            
+            # OpenAI的cached_tokens在prompt_tokens_details中
+            cached_tokens = 0
+            if hasattr(usage, 'prompt_tokens_details'):
+                details = usage.prompt_tokens_details
+                if hasattr(details, 'cached_tokens'):
+                    cached_tokens = getattr(details, 'cached_tokens', 0)
+                # 调试：查看details的所有属性
+                from ..utils.debug_logger import log_info
+                if DebugLogger.should_log("DEBUG"):
+                    attrs = [attr for attr in dir(details) if not attr.startswith('_')] if details else []
+                    log_info("OpenAI", f"prompt_tokens_details attributes: {attrs}")
+            
+            token_info["cached_tokens"] = cached_tokens
             result["token_usage"] = token_info
+            
             # 调试日志
-            from ..utils.debug_logger import log_info
             log_info("OpenAI", f"Token usage detected: {token_info}")
+            if cached_tokens > 0:
+                log_info("OpenAI", f"Prompt caching active - Cached tokens: {cached_tokens}")
             # 如果只有 usage 信息，直接返回
             if not chunk.choices:
                 return result

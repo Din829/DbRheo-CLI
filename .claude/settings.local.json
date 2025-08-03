@@ -10,7 +10,13 @@
       "Bash(rm:*)",
       "Bash(python -m mypy:*)",
       "Bash(mkdir:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pip show:*)",
+      "WebFetch(domain:discuss.ai.google.dev)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(python:*)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

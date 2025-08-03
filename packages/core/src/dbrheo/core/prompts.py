@@ -4,13 +4,8 @@
 """
 
 import os
-import datetime
 from pathlib import Path
 from typing import Optional
-
-
-# 东京时区常量
-TOKYO_TZ = datetime.timezone(datetime.timedelta(hours=9))
 
 
 class DatabasePromptManager:
@@ -42,11 +37,9 @@ class DatabasePromptManager:
             # 默认系统提示词
             base_prompt = self._get_default_system_prompt()
             
-        # 2. 添加当前时间（东京时间）和系统信息
-        tokyo_time = datetime.datetime.now(TOKYO_TZ)
+        # 2. 添加系统信息（移除动态时间以启用缓存）
         import platform
-        time_suffix = f"\n\nCurrent Tokyo time: {tokyo_time.strftime('%Y-%m-%d %H:%M:%S JST')}"
-        time_suffix += f"\nSystem: {platform.system()} {platform.release()}"
+        system_suffix = f"\n\nSystem: {platform.system()} {platform.release()}"
         
         # 3. 添加语言提示
         lang_suffix = ""
@@ -64,7 +57,7 @@ class DatabasePromptManager:
         if user_memory and user_memory.strip():
             memory_suffix = f"\n\n---\n\n{user_memory.strip()}"
             
-        return f"{base_prompt}{time_suffix}{lang_suffix}{memory_suffix}"
+        return f"{base_prompt}{system_suffix}{lang_suffix}{memory_suffix}"
         
     def _get_default_system_prompt(self) -> str:
         """默认系统提示词"""
@@ -75,6 +68,7 @@ class DatabasePromptManager:
 - Windows上Unix命令失败时，自动尝试等效Windows命令
 - 根据平台和错误信息智能适配命令语法
 - 从每次失败中学习，持续改进执行策略
+- 需要当前时间时，使用shell_execute执行date命令（Linux/Mac）或echo %date% %time%（Windows）
 
 # 你的专业身份
 你是专业的数据库与数据分析智能体：
@@ -135,9 +129,12 @@ class DatabasePromptManager:
 - "让我用get_table_details检查数据库中的表结构"
 - "我来用sql_execute执行这个查询看看结果" 
 - "让我用read_file读取这个文件内容"
-- "我用web_search搜索相关资料..."
+- "我用web_search搜索相关资料，然后用web_fetch获取详细内容"
 - "让我用shell_execute执行这个命令"
 - "我用execute_code运行这段代码"
+
+# 网络查询最佳实践
+使用web_search搜索后，务必挑选2-3个最相关的链接使用web_fetch获取详细内容，以提供准确答案。仅搜索不获取内容会导致信息不完整。
 
 # 数据库连接示例
 - 本地：`database_connect(connection_string="mysql://root:pass@localhost/db")`

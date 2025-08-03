@@ -43,7 +43,7 @@ class GeminiService:
         
         # 映射简短名称到完整模型名（只保留核心模型）
         model_mappings = {
-            "gemini": "gemini-2.5-flash",  # 默认且唯一的 Gemini 模型
+            "gemini": "gemini-2.5-flash",  # 稳定版本的正式名称
             "flash": "gemini-2.5-flash",
             "gemini-flash": "gemini-2.5-flash",
             "gemini-2.5": "gemini-2.5-flash",
@@ -338,7 +338,8 @@ class GeminiService:
             token_info = {
                 "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
                 "completion_tokens": getattr(usage, 'candidates_token_count', 0),
-                "total_tokens": getattr(usage, 'total_token_count', 0)
+                "total_tokens": getattr(usage, 'total_token_count', 0),
+                "cached_tokens": getattr(usage, 'cached_content_token_count', 0)  # 新增：Gemini 2.5的缓存token
             }
             
             # 更新跟踪器（总是保存最新的值）
@@ -350,6 +351,19 @@ class GeminiService:
             log_info("Gemini", f"   - prompt_tokens: {token_info['prompt_tokens']}")
             log_info("Gemini", f"   - completion_tokens: {token_info['completion_tokens']}")
             log_info("Gemini", f"   - total_tokens: {token_info['total_tokens']}")
+            log_info("Gemini", f"   - cached_tokens: {token_info['cached_tokens']}")
+            if token_info['cached_tokens'] > 0:
+                log_info("Gemini", f"   - Cache hit: {token_info['cached_tokens']} tokens cached")
+            # 调试：列出usage_metadata的所有属性和值
+            if DebugLogger.should_log("DEBUG"):
+                attrs = [attr for attr in dir(usage) if not attr.startswith('_')]
+                log_info("Gemini", f"   - usage_metadata attributes: {attrs}")
+                # 尝试直接访问cached_content_token_count
+                try:
+                    cached_raw = usage.cached_content_token_count
+                    log_info("Gemini", f"   - Raw cached_content_token_count: {cached_raw}")
+                except:
+                    log_info("Gemini", "   - cached_content_token_count not accessible")
             log_info("Gemini", f"   - From chunk.usage_metadata directly")
             log_info("Gemini", f"   - 🚫 NOT sending token event (will send at stream end)")
             
@@ -362,7 +376,8 @@ class GeminiService:
                     token_info = {
                         "prompt_tokens": getattr(usage, 'prompt_token_count', 0),
                         "completion_tokens": getattr(usage, 'candidates_token_count', 0),
-                        "total_tokens": getattr(usage, 'total_token_count', 0)
+                        "total_tokens": getattr(usage, 'total_token_count', 0),
+                        "cached_tokens": getattr(usage, 'cached_content_token_count', 0)  # 新增
                     }
                     
                     # 更新跟踪器
