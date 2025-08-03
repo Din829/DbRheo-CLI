@@ -13,7 +13,7 @@ aiomysql>=0.2.0
 aiosqlite>=0.21.0
 
 # AI and API
-google-generativeai>=0.8.5
+google-genai>=1.0.0  # 新版Gemini SDK，支持显式缓存
 anthropic>=0.34.0  # Claude API support
 openai>=1.0.0  # OpenAI GPT API support
 

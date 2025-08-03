@@ -16,7 +16,9 @@
       "WebFetch(domain:ai.google.dev)",
       "Bash(python:*)",
       "WebFetch(domain:pypi.org)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(cp:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }
