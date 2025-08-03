@@ -382,10 +382,20 @@ class DbRheoCLI:
     
     def _handle_model_command(self, cmd: str):
         """处理模型切换命令"""
+        from ..constants import SUPPORTED_MODELS
         parts = cmd.split()
         
         if len(parts) == 2:
             model_name = parts[1]
+            
+            # 验证模型名称
+            if model_name not in SUPPORTED_MODELS:
+                console.print(f"[red]{_('invalid_model', model=model_name)}[/red]")
+                console.print(f"\n[cyan]{_('supported_models')}:[/cyan]")
+                for key, name in SUPPORTED_MODELS.items():
+                    console.print(f"  [bold]/model {key}[/bold] → {name}")
+                return
+            
             # 设置环境变量
             os.environ[ENV_VARS['MODEL']] = model_name
             
@@ -413,11 +423,8 @@ class DbRheoCLI:
                 
                 # 显示具体的可用模型
                 console.print(f"\n[cyan]{_('available_models')}:[/cyan]")
-                console.print(f"  [bold]/model gemini[/bold] → Gemini 2.5 Flash")
-                console.print(f"  [bold]/model claude[/bold] → Claude Sonnet 4 ({_('latest')})")
-                console.print(f"  [bold]/model sonnet3.7[/bold] → Claude 3.7 ({_('reasoning')})")
-                console.print(f"  [bold]/model gpt[/bold] → GPT-4.1 ({_('latest')})")
-                console.print(f"  [bold]/model gpt-mini[/bold] → GPT-4.1 Mini ({_('fast')})")
+                for key, name in SUPPORTED_MODELS.items():
+                    console.print(f"  [bold]/model {key}[/bold] → {name}")
             except Exception as e:
                 console.print(f"[red]{_('model_switch_failed', error=e)}[/red]")
                 log_info("CLI", f"Model switch failed: {e}")
@@ -426,11 +433,11 @@ class DbRheoCLI:
             current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
             console.print(f"[cyan]{_('current_model', model=current_model)}[/cyan]")
             console.print(f"\n{_('model_usage')}:\n")
-            console.print(f"  [bold]/model gemini[/bold] → Gemini 2.5 Flash ({_('default')})")
-            console.print(f"  [bold]/model claude[/bold] → Claude Sonnet 4")
-            console.print(f"  [bold]/model sonnet3.7[/bold] → Claude 3.7")
-            console.print(f"  [bold]/model gpt[/bold] → GPT-4.1")
-            console.print(f"  [bold]/model gpt-mini[/bold] → GPT-4.1 Mini")
+            for key, name in SUPPORTED_MODELS.items():
+                if key == 'gemini':
+                    console.print(f"  [bold]/model {key}[/bold] → {name} ({_('default')})")
+                else:
+                    console.print(f"  [bold]/model {key}[/bold] → {name}")
             console.print(f"\n[dim]{_('example')}: /model claude[/dim]")
     
     def _handle_token_command(self):

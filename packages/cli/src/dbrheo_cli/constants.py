@@ -63,3 +63,12 @@ DEBUG_LEVEL_RANGE = (0, 5)
 PATHS = {
     'SRC_ROOT': lambda: os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 }
+
+# 支持的模型列表
+SUPPORTED_MODELS = {
+    'gemini': 'Gemini 2.5 Flash',
+    'claude': 'Claude Sonnet 4',
+    'sonnet3.7': 'Claude 3.7',
+    'gpt': 'GPT-4.1',
+    'gpt-mini': 'GPT-4.1 Mini'
+}

@@ -1,4 +1,5 @@
 """
+已经过时, 已经迁移至 gemini_service_new.py
 Gemini API服务 - 处理与Google Gemini API的通信
 完全对齐Gemini CLI的API调用方式
 """

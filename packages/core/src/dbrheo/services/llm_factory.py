@@ -19,7 +19,7 @@ class LLMServiceFactory:
     # 模型映射表 - 避免硬编码，便于扩展
     MODEL_MAPPINGS: Dict[str, Dict[str, str]] = {
         "gemini": {
-            "module": "gemini_service",
+            "module": "gemini_service_new",
             "class": "GeminiService",
             "prefixes": ["gemini", "models/gemini"]  # 支持多种前缀
         },
@@ -79,7 +79,7 @@ class LLMServiceFactory:
             log_info("LLMFactory", f"Failed to import {service_info['module']}: {e}")
             log_info("LLMFactory", "Falling back to GeminiService")
             
-            from .gemini_service import GeminiService
+            from .gemini_service_new import GeminiService
             return GeminiService(config)
         except ValueError as e:
             # 配置错误（如缺少 API key）
