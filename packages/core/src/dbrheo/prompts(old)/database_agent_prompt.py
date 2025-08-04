@@ -234,7 +234,11 @@ TOOL_SPECIFIC_GUIDANCE = {
 - Use immediately after web_search to get actual content
 - Can process multiple URLs in one call (up to 20)
 - Include processing instructions in the prompt (e.g., 'summarize key points')
-- Extract and synthesize information for the user"""
+- Extract and synthesize information for the user""",
+    
+    "execute_code": """When using execute_code:
+- Each execution runs in a fresh environment - variables don't persist between calls
+- Consider your approach flexibly - combine operations when needed"""
 }
 
 

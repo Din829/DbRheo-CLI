@@ -25,7 +25,7 @@ from .adapters.transaction_manager import DatabaseTransactionManager
 from .adapters.dialect_parser import SQLDialectParser
 
 # 服务层
-from .services.gemini_service import GeminiService
+from .services.gemini_service_new import GeminiService
 
 # 监控遥测
 from .telemetry.tracer import DatabaseTracer

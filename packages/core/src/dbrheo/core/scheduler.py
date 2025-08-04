@@ -139,11 +139,14 @@ class DatabaseToolScheduler:
         尝试执行所有已调度的工具调用
         """
         DebugLogger.log_scheduler_event("execution_start", len(self.tool_calls))
+        log_info("Scheduler", f"_attempt_execution_of_scheduled_calls: {len(self.tool_calls)} tools total")
         
         # 调试：打印所有工具的状态
-        if DebugLogger.should_log("DEBUG"):
-            for tc in self.tool_calls:
-                log_info("Scheduler", f"Tool {tc.request.name} status: {tc.status}")
+        for idx, tc in enumerate(self.tool_calls):
+            log_info("Scheduler", f"  Tool[{idx}] {tc.request.name} - {tc.request.call_id} - status: {tc.status}")
+        
+        scheduled_count = sum(1 for tc in self.tool_calls if tc.status == 'scheduled')
+        log_info("Scheduler", f"Found {scheduled_count} scheduled tools to execute")
         
         for tool_call in self.tool_calls:
             if tool_call.status == 'scheduled':
@@ -255,6 +258,8 @@ class DatabaseToolScheduler:
                   
     def _notify_tool_calls_update(self):
         """通知UI工具调用状态更新"""
+        from ..utils.debug_logger import log_info
+        log_info("Scheduler", f"🔄 _notify_tool_calls_update - Scheduler ID: {id(self)}, tool_calls ID: {id(self.tool_calls)}, count: {len(self.tool_calls)}")
         if self.on_tool_calls_update:
             self.on_tool_calls_update(self.tool_calls)
             
@@ -276,6 +281,15 @@ class DatabaseToolScheduler:
             payload: 额外的数据（如修改后的SQL）
         """
         # 找到等待确认的工具调用
+        from ..utils.debug_logger import log_info
+        log_info("Scheduler", f"🔍 handle_confirmation_response called for {call_id} with outcome: {outcome}")
+        log_info("Scheduler", f"🔍 Scheduler instance ID: {id(self)}")
+        log_info("Scheduler", f"🔍 Current tool_calls count: {len(self.tool_calls)}")
+        log_info("Scheduler", f"🔍 tool_calls list ID: {id(self.tool_calls)}")
+        
+        for idx, call in enumerate(self.tool_calls):
+            log_info("Scheduler", f"  Tool[{idx}]: {call.request.name} - {call.request.call_id} - status: {call.status}")
+        
         tool_call = None
         for call in self.tool_calls:
             if call.request.call_id == call_id and call.status == 'awaiting_approval':
@@ -283,9 +297,10 @@ class DatabaseToolScheduler:
                 break
                 
         if not tool_call:
-            from ..utils.debug_logger import log_info
-            log_info("Scheduler", f"Tool call {call_id} not found or not awaiting approval")
+            log_info("Scheduler", f"Tool call {call_id} not found or not awaiting approval in {len(self.tool_calls)} tools")
             return
+            
+        log_info("Scheduler", f"Found tool {tool_call.request.name} for confirmation")
             
         # 根据用户响应处理
         if outcome == 'cancel' or signal.aborted:
@@ -308,6 +323,7 @@ class DatabaseToolScheduler:
             
         elif outcome in ['proceed_once', 'proceed_always', 'proceed_always_server', 'proceed_always_tool']:
             # 用户批准执行
+            log_info("Scheduler", f"Setting tool {call_id} to scheduled status")
             self._set_status(call_id, 'scheduled')
             
             # TODO: 处理"总是允许"的情况
@@ -316,6 +332,7 @@ class DatabaseToolScheduler:
             # 这需要在配置或上下文中记录用户偏好
             
         # 尝试执行所有已调度的工具
+        log_info("Scheduler", f"Attempting to execute scheduled tools after confirmation")
         await self._attempt_execution_of_scheduled_calls(signal)
     
     async def _wait_for_completion(self):
@@ -352,20 +369,65 @@ class DatabaseToolScheduler:
         检查所有工具调用是否完成，如果完成则清理状态并通知
         参考 Gemini CLI 的 checkAndNotifyCompletion 实现
         """
+        from ..utils.debug_logger import log_info
+        log_info("Scheduler", f"_check_and_notify_completion called with {len(self.tool_calls)} tools")
+        
+        if len(self.tool_calls) == 0:
+            log_info("Scheduler", "No tools to check")
+            return
+            
+        # 打印所有工具的状态
+        for idx, call in enumerate(self.tool_calls):
+            log_info("Scheduler", f"  Tool[{idx}]: {call.request.name} - status: {call.status}")
+        
         # 检查是否所有调用都处于终止状态
         all_calls_terminal = all(
             call.status in ['success', 'error', 'cancelled']
             for call in self.tool_calls
         )
         
-        if len(self.tool_calls) > 0 and all_calls_terminal:
+        # 检查是否有工具正在等待确认
+        has_awaiting_approval = any(
+            call.status == 'awaiting_approval'
+            for call in self.tool_calls
+        )
+        
+        # 添加额外的检查：是否有执行中的工具
+        has_executing = any(
+            call.status == 'executing'
+            for call in self.tool_calls
+        )
+        
+        log_info("Scheduler", f"all_calls_terminal: {all_calls_terminal}, has_awaiting_approval: {has_awaiting_approval}, has_executing: {has_executing}")
+        
+        # 只有当所有工具都完成且没有等待确认或执行中的工具时才清理
+        if len(self.tool_calls) > 0 and all_calls_terminal and not has_awaiting_approval and not has_executing:
             # 保存完成的调用列表
             completed_calls = list(self.tool_calls)
             
             # 清空工具调用列表 - 这是关键！
+            import traceback
+            log_info("Scheduler", "🚨 CLEARING tool_calls - conditions met:")
+            log_info("Scheduler", f"  len(tool_calls): {len(self.tool_calls)}")
+            log_info("Scheduler", f"  all_calls_terminal: {all_calls_terminal}")
+            log_info("Scheduler", f"  has_awaiting_approval: {has_awaiting_approval}")
+            log_info("Scheduler", f"  has_executing: {has_executing}")
+            log_info("Scheduler", "🚨 CLEARING tool_calls - stack trace:")
+            for line in traceback.format_stack():
+                log_info("Scheduler", f"  {line.strip()}")
             self.tool_calls = []
+        else:
+            # 添加不清理的原因日志
+            log_info("Scheduler", "⭕ NOT clearing tool_calls - conditions:")
+            log_info("Scheduler", f"  len(tool_calls): {len(self.tool_calls)}")
+            log_info("Scheduler", f"  all_calls_terminal: {all_calls_terminal}")
+            log_info("Scheduler", f"  has_awaiting_approval: {has_awaiting_approval}")
+            log_info("Scheduler", f"  has_executing: {has_executing}")
+            log_info("Scheduler", f"  condition result: {len(self.tool_calls) > 0 and all_calls_terminal and not has_awaiting_approval and not has_executing}")
             
-            # 记录日志
+        # 继续原有逻辑（只有清理时才执行）
+        if len(self.tool_calls) == 0 and 'completed_calls' in locals():
+            # 记录日志  
             from ..utils.debug_logger import DebugLogger, log_info
             log_info("Scheduler", f"All {len(completed_calls)} tool calls completed, clearing state")
             
@@ -388,9 +450,13 @@ class DatabaseToolScheduler:
         """
         import time
         
+        log_info("Scheduler", f"_set_status: {call_id} -> {status}")
+        
         for i, tool_call in enumerate(self.tool_calls):
             if tool_call.request.call_id != call_id:
                 continue
+                
+            log_info("Scheduler", f"Found tool at index {i}: {tool_call.request.name} - current status: {tool_call.status}")
                 
             # 不允许从终止状态转换
             if tool_call.status in ['success', 'error', 'cancelled']:

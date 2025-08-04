@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(python test:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(rm:*)",
+      "Bash(python -m mypy:*)",
+      "Bash(mkdir:*)",
+      "Bash(grep:*)",
+      "Bash(pip show:*)",
+      "WebFetch(domain:discuss.ai.google.dev)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(python:*)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:github.com)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "WebFetch(domain:medium.com)",
+      "Bash(pip3 show:*)",
+      "WebFetch(domain:googleapis.github.io)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/python.exe test_config_priority.py)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/python.exe test_cache_with_system.py)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/Scripts/pip.exe show google-genai)"
+    ],
+    "deny": []
+  }
+}

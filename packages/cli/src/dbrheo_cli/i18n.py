@@ -131,6 +131,7 @@ class I18n:
             'multiline_mode_hint': '进入多行输入模式，再次输入 ``` 或 <<< 结束',
             'startup_tips_title': '使用提示:',
             'input_halfwidth_hint': '（日语系统请输入半角数字）',
+            'token_usage_warning': 'Token使用量较高 ({tokens:,})。建议开启新会话。',
             
             # 工具执行消息
             'tool_executing': '执行工具: {tool_name}',
@@ -145,7 +146,61 @@ class I18n:
             'startup_tip_3': '3. /help 查看更多信息',
             'startup_tip_4': '4. 支持多种数据库：SQLite、MySQL、PostgreSQL',
             'startup_tip_5': '5. 集成 Python 运行时环境进行数据处理与可视化',
+            'startup_tip_6': '6. 支持多种AI模型：Gemini、Claude、GPT (/model 切换)',
             'home_dir_warning': '你正在主目录运行 DbRheo CLI。建议在项目目录中运行。',
+            
+            # 模型相关
+            'model_switched': '已切换到模型: {model}',
+            'model_switch_failed': '切换模型失败: {error}',
+            'current_model': '当前模型: {model}',
+            'model_usage': '使用方法',
+            'available_models': '可用模型',
+            'latest': '最新',
+            'reasoning': '推理增强',
+            'fast': '快速',
+            'default': '默认',
+            'example': '示例',
+            'invalid_model': '错误：不支持的模型 "{model}"',
+            'supported_models': '支持的模型：',
+            'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
+            'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
+            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'help_model': '切换AI模型',
+            
+            # API Key 相关
+            'api_key_missing': '⚠️  未检测到 {model} 的 API Key',
+            'api_key_setup': '请在 .env 文件中设置以下环境变量：',
+            'api_key_gemini': 'GOOGLE_API_KEY 或 GEMINI_API_KEY',
+            'api_key_claude': 'ANTHROPIC_API_KEY 或 CLAUDE_API_KEY',
+            'api_key_openai': 'OPENAI_API_KEY',
+            'api_key_instructions': '获取 API Key 请访问：',
+            'api_key_gemini_url': 'https://aistudio.google.com/apikey',
+            'api_key_claude_url': 'https://console.anthropic.com/settings/keys',
+            'api_key_openai_url': 'https://platform.openai.com/api-keys',
+            'api_key_reminder': '设置完成后请重启 CLI',
+            
+            # Token 统计相关
+            'token_usage_title': 'Token 使用统计',
+            'token_usage_total': '总计：{total} tokens ({calls} 次调用)',
+            'token_usage_detail': '├─ 输入：{prompt} tokens',
+            'token_usage_detail_output': '└─ 输出：{completion} tokens',
+            'token_usage_by_model': '按模型统计：',
+            'token_usage_model_detail': '  {model}：{total} tokens ({calls} 次调用)',
+            'token_command_hint': '使用 /token 查看当前统计',
+            'help_token': '查看 Token 使用统计',
+            'help_database': '数据库连接帮助',
+            'token_statistics_unavailable': 'Token 统计功能不可用',
+            'no_token_usage_yet': '暂无 Token 使用记录',
+            
+            # 数据库命令相关
+            'database_help_title': '数据库连接帮助',
+            'database_help_intro': '使用以下格式提供数据库连接信息：',
+            'database_help_direct': '直接连接',
+            'database_help_ssh': 'SSH隧道连接',
+            'database_help_examples': '示例',
+            'database_help_saved': '保存的连接',
+            'database_help_list_saved': '查看保存的连接：发送 "列出保存的数据库连接"',
+            'database_help_load_saved': '加载保存的连接：发送 "加载连接 <别名>"',
             
             # cli.py 相关
             'esc_abort': '用户按下ESC，中止输出...',
@@ -448,6 +503,7 @@ class I18n:
             'multiline_mode_hint': '複数行入力モードに入りました、再度 ``` または <<< で終了',
             'startup_tips_title': '使用のヒント:',
             'input_halfwidth_hint': '（半角数字で入力してください）',
+            'token_usage_warning': 'Token使用量が高い ({tokens:,})。新しいセッションを開始することをお勧めします。',
             
             # 工具执行消息
             'tool_executing': 'ツール実行中: {tool_name}',
@@ -462,7 +518,61 @@ class I18n:
             'startup_tip_3': '3. /help で詳細情報を表示',
             'startup_tip_4': '4. 対応データベース：SQLite、MySQL、PostgreSQL',
             'startup_tip_5': '5. Python実行環境を統合してデータ処理と可視化',
+            'startup_tip_6': '6. 複数のAIモデルをサポート：Gemini、Claude、GPT (/model で切り替え)',
             'home_dir_warning': 'ホームディレクトリで DbRheo CLI を実行しています。プロジェクトディレクトリでの実行をお勧めします。',
+            
+            # モデル関連
+            'model_switched': 'モデルを {model} に切り替えました',
+            'model_switch_failed': 'モデルの切り替えに失敗しました: {error}',
+            'current_model': '現在のモデル: {model}',
+            'model_usage': '使用方法',
+            'available_models': '利用可能なモデル',
+            'latest': '最新',
+            'reasoning': '推論強化',
+            'fast': '高速',
+            'default': 'デフォルト',
+            'example': '例',
+            'invalid_model': 'エラー：サポートされていないモデル "{model}"',
+            'supported_models': 'サポートされているモデル：',
+            'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
+            'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
+            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'help_model': 'AIモデルを切り替える',
+            
+            # API Key 関連
+            'api_key_missing': '⚠️  {model} の API Key が検出されませんでした',
+            'api_key_setup': '.env ファイルに以下の環境変数を設定してください：',
+            'api_key_gemini': 'GOOGLE_API_KEY または GEMINI_API_KEY',
+            'api_key_claude': 'ANTHROPIC_API_KEY または CLAUDE_API_KEY',
+            'api_key_openai': 'OPENAI_API_KEY',
+            'api_key_instructions': 'API Key の取得はこちら：',
+            'api_key_gemini_url': 'https://aistudio.google.com/apikey',
+            'api_key_claude_url': 'https://console.anthropic.com/settings/keys',
+            'api_key_openai_url': 'https://platform.openai.com/api-keys',
+            'api_key_reminder': '設定後は CLI を再起動してください',
+            
+            # Token 統計関連
+            'token_usage_title': 'Token 使用統計',
+            'token_usage_total': '合計：{total} tokens ({calls} 回呼び出し)',
+            'token_usage_detail': '├─ 入力：{prompt} tokens',
+            'token_usage_detail_output': '└─ 出力：{completion} tokens',
+            'token_usage_by_model': 'モデル別統計：',
+            'token_usage_model_detail': '  {model}：{total} tokens ({calls} 回)',
+            'token_command_hint': '/token を使用して現在の統計を表示',
+            'help_token': 'Token 使用統計を表示',
+            'help_database': 'データベース接続ヘルプ',
+            'token_statistics_unavailable': 'Token 統計機能は使用できません',
+            'no_token_usage_yet': 'まだ Token 使用記録がありません',
+            
+            # データベースコマンド関連
+            'database_help_title': 'データベース接続ヘルプ',
+            'database_help_intro': '以下の形式でデータベース接続情報を提供してください：',
+            'database_help_direct': '直接接続',
+            'database_help_ssh': 'SSHトンネル接続',
+            'database_help_examples': '例',
+            'database_help_saved': '保存された接続',
+            'database_help_list_saved': '保存された接続を表示：「保存されたデータベース接続を一覧表示」と送信',
+            'database_help_load_saved': '保存された接続をロード：「接続をロード <エイリアス>」と送信',
             
             # cli.py 相关
             'esc_abort': 'ユーザーがESCを押しました、出力を中止中...',
@@ -966,6 +1076,7 @@ class I18n:
             'multiline_mode_hint': 'Entering multiline input mode, type ``` or <<< again to finish',
             'startup_tips_title': 'Tips:',
             'input_halfwidth_hint': '(Please enter half-width numbers for Japanese systems)',
+            'token_usage_warning': 'Token usage high ({tokens:,}). Consider starting a new session.',
             
             # 工具执行消息
             'tool_executing': 'Executing tool: {tool_name}',
@@ -980,7 +1091,61 @@ class I18n:
             'startup_tip_3': '3. Type /help for more information',
             'startup_tip_4': '4. Supported databases: SQLite, MySQL, PostgreSQL',
             'startup_tip_5': '5. Integrated Python runtime for data processing and visualization',
+            'startup_tip_6': '6. Support for multiple AI models: Gemini, Claude, GPT (/model to switch)',
             'home_dir_warning': 'You are running DbRheo CLI in your home directory. It is recommended to run in a project directory.',
+            
+            # Model related
+            'model_switched': 'Switched to model: {model}',
+            'model_switch_failed': 'Failed to switch model: {error}',
+            'current_model': 'Current model: {model}',
+            'model_usage': 'Usage',
+            'available_models': 'Available models',
+            'latest': 'latest',
+            'reasoning': 'reasoning',
+            'fast': 'fast',
+            'default': 'default',
+            'example': 'Example',
+            'invalid_model': 'Error: Unsupported model "{model}"',
+            'supported_models': 'Supported models:',
+            'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
+            'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
+            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'help_model': 'Switch AI model',
+            
+            # API Key related
+            'api_key_missing': '⚠️  No API Key detected for {model}',
+            'api_key_setup': 'Please set the following environment variable in .env file:',
+            'api_key_gemini': 'GOOGLE_API_KEY or GEMINI_API_KEY',
+            'api_key_claude': 'ANTHROPIC_API_KEY or CLAUDE_API_KEY',
+            'api_key_openai': 'OPENAI_API_KEY',
+            'api_key_instructions': 'Get your API Key at:',
+            'api_key_gemini_url': 'https://aistudio.google.com/apikey',
+            'api_key_claude_url': 'https://console.anthropic.com/settings/keys',
+            'api_key_openai_url': 'https://platform.openai.com/api-keys',
+            'api_key_reminder': 'Please restart CLI after setup',
+            
+            # Token statistics
+            'token_usage_title': 'Token Usage Statistics',
+            'token_usage_total': 'Total: {total} tokens ({calls} calls)',
+            'token_usage_detail': '├─ Input: {prompt} tokens',
+            'token_usage_detail_output': '└─ Output: {completion} tokens',
+            'token_usage_by_model': 'By Model:',
+            'token_usage_model_detail': '  {model}: {total} tokens ({calls} calls)',
+            'token_command_hint': 'Use /token to view current statistics',
+            'help_token': 'View token usage statistics',
+            'help_database': 'Database connection help',
+            'token_statistics_unavailable': 'Token statistics not available',
+            'no_token_usage_yet': 'No token usage recorded yet',
+            
+            # Database command related
+            'database_help_title': 'Database Connection Help',
+            'database_help_intro': 'Provide database connection info in the following format:',
+            'database_help_direct': 'Direct Connection',
+            'database_help_ssh': 'SSH Tunnel Connection',
+            'database_help_examples': 'Examples',
+            'database_help_saved': 'Saved Connections',
+            'database_help_list_saved': 'View saved connections: send "list saved database connections"',
+            'database_help_load_saved': 'Load saved connection: send "load connection <alias>"',
             
             # cli.py 相关
             'esc_abort': 'User pressed ESC, aborting output...',

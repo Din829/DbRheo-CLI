@@ -122,11 +122,14 @@ def setup_environment():
 @click.option('--config',
               type=click.Path(exists=True),
               help='配置文件路径')
+@click.option('--model',
+              help='选择AI模型 (例如: gemini, claude-3.5-sonnet, gpt-4.1)')
 def main(db_file: Optional[str], 
          log: bool, 
          debug: Optional[int],
          no_color: bool,
-         config: Optional[str]):
+         config: Optional[str],
+         model: Optional[str]):
     """
     DbRheo CLI - 数据库智能助手
     
@@ -151,6 +154,26 @@ def main(db_file: Optional[str],
         os.environ[ENV_VARS['ENABLE_LOG']] = 'true'
         log_info("Main", _('log_enabled'))
     
+    # 设置模型（命令行参数优先）
+    if model:
+        os.environ[ENV_VARS['MODEL']] = model
+        log_info("Main", _('model_switched', model=model))
+    elif not os.environ.get(ENV_VARS['MODEL']):
+        # 如果没有命令行参数和环境变量，尝试从配置文件加载
+        try:
+            config_path = Path.cwd() / "config.yaml"
+            if config_path.exists():
+                import yaml
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config_data = yaml.safe_load(f) or {}
+                    saved_model = config_data.get('model')
+                    if saved_model and saved_model != 'gemini-2.5-flash':
+                        os.environ[ENV_VARS['MODEL']] = saved_model
+                        log_info("Main", f"Loaded model from config.yaml: {saved_model}")
+        except Exception:
+            # 静默失败
+            pass
+    
     # 创建CLI配置
     cli_config = CLIConfig(
         db_file=db_file,
@@ -173,12 +196,18 @@ def main(db_file: Optional[str],
             custom_message = _('home_dir_warning')
             
         # 显示完整启动画面
+        from . import __version__
         startup.display(
-            version="0.1.0",
+            version=__version__,
             show_tips=True,
             custom_message=custom_message,
             logo_style="default"  # 使用默认大号版本
         )
+        
+        # 检查当前模型的 API Key（第一次启动时）
+        from dbrheo_cli.utils.api_key_checker import show_api_key_setup_guide
+        current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
+        show_api_key_setup_guide(current_model)
         
         # 运行主循环
         asyncio.run(cli.run())

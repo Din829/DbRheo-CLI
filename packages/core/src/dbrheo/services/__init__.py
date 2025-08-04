@@ -3,8 +3,11 @@
 包括Gemini API服务、文件操作服务等
 """
 
-from .gemini_service import GeminiService
+from .gemini_service_new import GeminiService
+from .llm_factory import create_llm_service, LLMServiceFactory
 
 __all__ = [
-    "GeminiService"
+    "GeminiService",
+    "create_llm_service", 
+    "LLMServiceFactory"
 ]

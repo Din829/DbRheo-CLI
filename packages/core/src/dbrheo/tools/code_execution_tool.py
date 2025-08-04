@@ -113,7 +113,7 @@ class CodeExecutionTool(DatabaseTool):
         
         # 构建描述
         lang_descriptions = [f"{lang}({self.LANGUAGE_CONFIG[lang]['description']})" for lang in supported_languages]
-        description = f"Execute code in multiple languages. Supports: {', '.join(lang_descriptions)}. Returns execution results."
+        description = f"Execute code in multiple languages. Supports: {', '.join(lang_descriptions)}. Each execution runs in a fresh environment - variables don't persist between calls. Consider combining operations when needed. Returns execution results."
         
         super().__init__(
             name="execute_code",
@@ -134,11 +134,21 @@ class CodeExecutionTool(DatabaseTool):
         
     def validate_tool_params(self, params: Dict[str, Any]) -> Optional[str]:
         """验证参数"""
+        # 调试：打印接收到的参数
+        from ..utils.debug_logger import log_info
+        log_info("CodeExecution", f"Received params: {params}")
+        
         code = params.get("code", "").strip()
         if not code:
             return self._('code_exec_empty', default="代码不能为空")
             
         language = params.get("language", "")
+        if not language:
+            # 如果没有提供语言，默认使用 python
+            log_info("CodeExecution", "No language provided, defaulting to python")
+            params["language"] = "python"
+            language = "python"
+            
         if language not in self.supported_languages:
             return self._('code_exec_unsupported_lang', default="不支持的语言：{language}。支持的语言：{supported}", language=language, supported=', '.join(self.supported_languages))
             

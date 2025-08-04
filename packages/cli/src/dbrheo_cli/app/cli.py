@@ -80,8 +80,14 @@ class DbRheoCLI:
         self.db_config.set_test_config('i18n', i18n_adapter)
         
         # 创建客户端
+        log_info("CLI", f"🔄 Creating new DatabaseClient (previous client ID: {id(self.client) if hasattr(self, 'client') else 'None'})")
         self.client = DatabaseClient(self.db_config)
+        log_info("CLI", f"🔄 New DatabaseClient created with ID: {id(self.client)}")
+        log_info("CLI", f"🔄 New tool_scheduler ID: {id(self.client.tool_scheduler)}")
         self.signal = SimpleAbortSignal()
+        
+        # 将client引用保存到config中（供token警告功能使用）
+        self.config._client = self.client
         
         # 设置工具调度器回调
         self._setup_scheduler_callbacks()
@@ -300,6 +306,12 @@ class DbRheoCLI:
             self._handle_debug_command(cmd)
         elif cmd.startswith(COMMANDS['LANG'][0]) or cmd.startswith(COMMANDS['LANG'][1]):
             self._handle_lang_command(cmd)
+        elif cmd.startswith(COMMANDS['MODEL'][0]):
+            self._handle_model_command(cmd)
+        elif cmd in COMMANDS['TOKEN']:
+            self._handle_token_command()
+        elif cmd in COMMANDS['DATABASE']:
+            self._handle_database_command()
         else:
             console.print(f"[yellow]{_('unknown_command', command=command)}[/yellow]")
     
@@ -368,6 +380,143 @@ class DbRheoCLI:
             console.print(_('current_language', lang=lang_name))
             console.print(_('language_usage'))
     
+    def _handle_model_command(self, cmd: str):
+        """处理模型切换命令"""
+        from ..constants import SUPPORTED_MODELS
+        parts = cmd.split()
+        
+        if len(parts) == 2:
+            model_name = parts[1]
+            
+            # 验证模型名称
+            if model_name not in SUPPORTED_MODELS:
+                console.print(f"[red]{_('invalid_model', model=model_name)}[/red]")
+                console.print(f"\n[cyan]{_('supported_models')}:[/cyan]")
+                for key, name in SUPPORTED_MODELS.items():
+                    console.print(f"  [bold]/model {key}[/bold] → {name}")
+                return
+            
+            # 设置环境变量
+            os.environ[ENV_VARS['MODEL']] = model_name
+            
+            # 重新创建后端连接以使用新模型
+            try:
+                # 清理当前连接状态
+                if hasattr(self, 'signal') and self.signal:
+                    self.signal.abort()  # 中止任何进行中的操作
+                
+                # 重新初始化后端
+                self._init_backend()
+                
+                # 重新初始化处理器以使用新的scheduler
+                self._init_handlers()
+                
+                # 保存用户的模型选择偏好（最小侵入性）
+                if hasattr(self.client.config, 'save_user_preference'):
+                    self.client.config.save_user_preference('model', model_name)
+                
+                console.print(f"[green]{_('model_switched', model=model_name)}[/green]")
+                
+                # 检查新模型的 API Key
+                from ..utils.api_key_checker import show_api_key_setup_guide
+                show_api_key_setup_guide(model_name)
+                
+                # 显示具体的可用模型
+                console.print(f"\n[cyan]{_('available_models')}:[/cyan]")
+                for key, name in SUPPORTED_MODELS.items():
+                    console.print(f"  [bold]/model {key}[/bold] → {name}")
+            except Exception as e:
+                console.print(f"[red]{_('model_switch_failed', error=e)}[/red]")
+                log_info("CLI", f"Model switch failed: {e}")
+        else:
+            # 显示当前模型和可用选项
+            current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
+            console.print(f"[cyan]{_('current_model', model=current_model)}[/cyan]")
+            console.print(f"\n{_('model_usage')}:\n")
+            for key, name in SUPPORTED_MODELS.items():
+                if key == 'gemini':
+                    console.print(f"  [bold]/model {key}[/bold] → {name} ({_('default')})")
+                else:
+                    console.print(f"  [bold]/model {key}[/bold] → {name}")
+            console.print(f"\n[dim]{_('example')}: /model claude[/dim]")
+    
+    def _handle_token_command(self):
+        """处理 token 统计命令"""
+        if hasattr(self.client, 'token_statistics'):
+            self._show_token_statistics(self.client.token_statistics)
+        else:
+            console.print(f"[yellow]{_('token_statistics_unavailable')}[/yellow]")
+    
+    def _show_token_statistics(self, stats):
+        """显示 token 统计信息"""
+        summary = stats.get_summary()
+        
+        if summary['total_calls'] == 0:
+            console.print(f"[dim]{_('no_token_usage_yet')}[/dim]")
+            return
+        
+        # 显示标题
+        console.print(f"\n[bold]{_('token_usage_title')}[/bold]")
+        
+        # 显示总计
+        console.print(_('token_usage_total', 
+                       total=summary['total_tokens'],
+                       calls=summary['total_calls']))
+        console.print(_('token_usage_detail', 
+                       prompt=summary['total_prompt_tokens']))
+        console.print(_('token_usage_detail_output', 
+                       completion=summary['total_completion_tokens']))
+        
+        # 如果有缓存，显示缓存信息
+        if summary.get('total_cached_tokens', 0) > 0:
+            original_prompt = summary.get('original_prompt_tokens', summary['total_prompt_tokens'])
+            console.print(f"[dim]  (原始输入: {original_prompt} tokens, 缓存: {summary['total_cached_tokens']} tokens)[/dim]")
+        
+        # 按模型显示
+        if summary['by_model']:
+            console.print(f"\n{_('token_usage_by_model')}")
+            for model, model_stats in summary['by_model'].items():
+                console.print(_('token_usage_model_detail',
+                              model=model,
+                              total=model_stats['total_tokens'],
+                              calls=model_stats['calls']))
+                # 如果有缓存，显示缓存信息
+                if model_stats.get('cached_tokens', 0) > 0:
+                    console.print(f"[dim]    缓存: {model_stats['cached_tokens']} tokens[/dim]")
+        
+        
+        console.print()  # 空行
+    
+    def _handle_database_command(self):
+        """处理数据库连接命令"""
+        # 显示数据库连接帮助信息
+        db_help_text = f"""
+[bold]{_('database_help_title', default='数据库连接帮助')}:[/bold]
+
+{_('database_help_intro', default='使用以下格式提供数据库连接信息：')}
+
+[bold]{_('database_help_direct', default='直接连接')}:[/bold]
+  host port user password database_name
+
+[bold]{_('database_help_ssh', default='SSH隧道连接')}:[/bold]
+  host port user password database_name ssh_host ssh_user ssh_key_path [ssh_port]
+
+[bold]{_('database_help_examples', default='示例')}:[/bold]
+  [dim]# 直接连接到本地MySQL[/dim]
+  localhost 3306 root mypassword mydb
+  
+  [dim]# 通过SSH隧道连接[/dim]
+  localhost 3306 root mypassword mydb bastion.com ec2-user ~/.ssh/key.pem
+  
+  [dim]# 指定SSH端口[/dim]
+  localhost 3306 root mypassword mydb bastion.com ec2-user ~/.ssh/key.pem 2222
+
+[bold]{_('database_help_saved', default='保存的连接')}:[/bold]
+  {_('database_help_list_saved', default='查看保存的连接：发送 "列出保存的数据库连接"')}
+  {_('database_help_load_saved', default='加载保存的连接：发送 "加载连接 <别名>"')}
+"""
+        console.print(db_help_text)
+    
     def _show_help(self):
         """显示帮助信息"""
         help_text = f"""
@@ -377,6 +526,9 @@ class DbRheoCLI:
   /clear       - {_('help_clear')}
   /debug <0-5> - {_('help_debug')}
   /lang [code] - {_('help_lang')}
+  /model [name]- {_('help_model')}
+  /token       - {_('help_token')}
+  /database    - {_('help_database', default='数据库连接帮助')}
   ``` 或 <<<   - {_('help_multiline')}
   ESC         - {_('help_esc')}
   
@@ -440,8 +592,51 @@ class DbRheoCLI:
     
     async def _continue_after_confirmation(self):
         """确认后继续处理"""
-        # 等待工具执行完成
-        await asyncio.sleep(0.5)
+        log_info("CLI", "=== _continue_after_confirmation START ===")
+        
+        # 获取当前模型
+        current_model = os.environ.get(ENV_VARS['MODEL'], 'gemini-2.5-flash')
+        log_info("CLI", f"Current model: {current_model}")
+        
+        # 只对需要严格消息配对的模型进行特殊处理
+        model_lower = current_model.lower()
+        needs_strict_pairing = any(model in model_lower for model in ['gpt', 'claude', 'openai', 'sonnet'])
+        
+        if needs_strict_pairing:
+            log_info("CLI", f"Model {current_model} needs strict message pairing, using polling approach")
+            
+            # 对GPT/Claude模型使用轮询确保工具真正完成
+            max_wait = 5.0  # 最多等待5秒
+            poll_interval = 0.1  # 每100ms检查一次
+            waited = 0
+            
+            log_info("CLI", f"Starting polling for tool completion (max {max_wait}s)...")
+            
+            while waited < max_wait:
+                # 检查是否还有未完成的工具
+                active_tools = [
+                    call for call in self.client.tool_scheduler.tool_calls
+                    if call.status in ['scheduled', 'executing', 'validating']
+                ]
+                
+                if not active_tools:
+                    log_info("CLI", f"All tools completed after {waited:.1f}s")
+                    break
+                    
+                log_info("CLI", f"Still have {len(active_tools)} active tools, waiting...")
+                await asyncio.sleep(poll_interval)
+                waited += poll_interval
+            
+            if waited >= max_wait:
+                log_info("CLI", f"Warning: Polling timeout after {max_wait}s, proceeding anyway")
+        else:
+            # Gemini等模型保持原有逻辑
+            wait_time = self._get_model_wait_time(current_model)
+            log_info("CLI", f"Wait time for {current_model}: {wait_time}s")
+            log_info("CLI", f"Starting wait for tool completion...")
+            await asyncio.sleep(wait_time)
+        
+        log_info("CLI", f"Wait completed, proceeding to send 'Please continue.'")
         
         # 显示继续处理的提示
         console.print(f"\n[dim]{_('continuing')}[/dim]")
@@ -451,6 +646,8 @@ class DbRheoCLI:
             # 继续处理时不重置信号（保持中止状态）
             self.in_response = True  # 标记开始接收响应
             tool_calls = []  # 记录工具调用
+            
+            log_info("CLI", "Sending 'Please continue.' to AI")
             
             async for event in self.client.send_message_stream(
                 "Please continue.", self.signal, self.session_id
@@ -481,12 +678,51 @@ class DbRheoCLI:
         finally:
             self.in_response = False  # 重置响应标志
     
+    def _get_model_wait_time(self, model_name: str) -> float:
+        """
+        根据模型类型返回合适的等待时间
+        
+        Args:
+            model_name: 模型名称
+            
+        Returns:
+            等待时间（秒）
+        """
+        model_lower = model_name.lower()
+        
+        # 模型特性配置 - 易于扩展和维护
+        model_features = {
+            # 需要严格消息配对的模型需要更长等待时间
+            'claude': 1.5,
+            'gpt': 1.5,
+            'openai': 1.5,
+            # Gemini 等支持灵活消息格式的模型使用较短等待时间
+            'gemini': 0.5,
+            # 默认值
+            'default': 0.5
+        }
+        
+        # 匹配模型类型
+        for model_prefix, wait_time in model_features.items():
+            if model_prefix in model_lower:
+                return wait_time
+                
+        return model_features['default']
+    
     def cleanup(self):
         """清理资源"""
         log_info("CLI", "Cleaning up resources...")
         
         # 设置运行标志
         self.running = False
+        
+        # 显示 token 统计（如果有的话）
+        if hasattr(self, 'client') and hasattr(self.client, 'token_statistics'):
+            summary = self.client.token_statistics.get_summary()
+            if summary['total_calls'] > 0:
+                # 在退出前显示统计
+                console.print()  # 空行
+                self._show_token_statistics(self.client.token_statistics)
         
         # 保存历史记录
         try:

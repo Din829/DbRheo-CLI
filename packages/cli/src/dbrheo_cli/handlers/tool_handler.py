@@ -169,17 +169,21 @@ class ToolHandler:
             console.print(f"[green]{_('tool_confirmed_all')}[/green]")
         
         # 处理每个待确认的工具
+        log_info("ToolHandler", f"Processing {len(self.pending_confirmations)} pending confirmations with outcome: {outcome}")
+        
         for call_id, tool_call in list(self.pending_confirmations.items()):
             try:
+                log_info("ToolHandler", f"Calling handle_confirmation_response for tool {call_id}")
                 await self.scheduler.handle_confirmation_response(
                     call_id, outcome, signal
                 )
-                if DebugLogger.should_log("DEBUG"):
-                    log_info("ToolHandler", f"Confirmed tool {call_id} with outcome: {outcome}")
+                log_info("ToolHandler", f"Successfully confirmed tool {call_id} with outcome: {outcome}")
             except Exception as e:
+                log_info("ToolHandler", f"Error confirming tool {call_id}: {e}")
                 console.print(f"[error]{_('tool_error', error=e)}[/error]")
         
         # 清空待确认列表
+        log_info("ToolHandler", f"Clearing {len(self.pending_confirmations)} pending confirmations")
         self.pending_confirmations.clear()
     
     def _display_tool_result(self, tool_name: str, result_display: str):

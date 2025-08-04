@@ -514,6 +514,9 @@ class EnhancedInputHandler:
         # 检查是否启用增强输入
         self.enhanced_enabled = os.getenv('DBRHEO_ENHANCED_INPUT', 'true').lower() == 'true'
         
+        # Token警告阈值（可配置）
+        self.token_warning_threshold = int(os.getenv('DBRHEO_TOKEN_WARNING_THRESHOLD', '300000'))
+        
     async def get_input(self) -> str:
         """
         异步获取用户输入
@@ -541,6 +544,9 @@ class EnhancedInputHandler:
                 self._first_input = False
             else:
                 self.console.print()  # 简洁的空行分隔
+            
+            # 检查并显示token警告
+            self._check_and_show_token_warning()
             
             # 根据配置选择输入方式
             if self.enhanced_enabled:
@@ -572,3 +578,43 @@ class EnhancedInputHandler:
             return "\n".join(lines)
         
         return first_line
+    
+    def _check_and_show_token_warning(self):
+        """
+        检查token使用量并显示token警告
+        最小侵入性设计：只在需要时显示，不影响正常流程
+        """
+        try:
+            # 尝试从多个来源获取client实例（最小侵入性）
+            client = None
+            
+            # 方法1: 从配置中获取
+            if hasattr(self.config, '_client'):
+                client = self.config._client
+            
+            # 方法52: 从全局主模块获取
+            if not client:
+                import sys
+                main_module = sys.modules.get('__main__')
+                if hasattr(main_module, 'cli'):
+                    cli = getattr(main_module, 'cli')
+                    if hasattr(cli, 'client'):
+                        client = cli.client
+            
+            # 检查token统计
+            if client and hasattr(client, 'token_statistics'):
+                summary = client.token_statistics.get_summary()
+                total_tokens = summary.get('total_tokens', 0)
+                
+                # 超过阈值时显示警告
+                if total_tokens > self.token_warning_threshold:
+                    # 使用i18n系统获取本地化的警告文本
+                    from ..i18n import _
+                    warning_text = _('token_usage_warning', tokens=total_tokens)
+                    
+                    # 使用浅黄色显示警告
+                    self.console.print(f"[yellow dim]{warning_text}[/yellow dim]")
+                        
+        except Exception:
+            # 忽略所有错误，不影响正常输入
+            pass

@@ -24,7 +24,7 @@ class GetTableDetailsTool(DatabaseTool):
         super().__init__(
             name="get_table_details",
             display_name=self._('table_details_tool_name', default="表结构详情") if i18n else "表结构详情",
-            description="Get complete table schema in one step: columns, constraints, indexes, foreign keys, and statistics. No need for multiple queries.",
+            description="Get complete table schema: columns, constraints, indexes, foreign keys, and statistics. Flexible tool that adapts to your analysis needs. Designed for single table - call multiple times for multiple tables.",
             parameter_schema={
                 "type": "object",
                 "properties": {
@@ -110,6 +110,13 @@ class GetTableDetailsTool(DatabaseTool):
         include_sample = params.get("include_sample_data", False)
         sample_size = params.get("sample_size", 3)
         
+        # 检查是否有Agent反馈信息（多表请求情况）
+        agent_feedback = params.get("_agent_feedback")
+        if agent_feedback:
+            # 将反馈信息传递给Agent，但不阻止执行
+            from ..utils.debug_logger import log_info
+            log_info("TableDetails", f"Agent feedback: {agent_feedback}")
+        
         try:
             # 获取数据库适配器
             from ..adapters.adapter_factory import get_adapter
@@ -165,7 +172,7 @@ class GetTableDetailsTool(DatabaseTool):
                     extra_info['sample_data'] = samples
                     
                 # 格式化结果
-                return self._format_result(table_name, table_info, extra_info, adapter.get_dialect())
+                return self._format_result(table_name, table_info, extra_info, adapter.get_dialect(), agent_feedback)
                 
             finally:
                 # 确保断开连接
@@ -245,7 +252,8 @@ class GetTableDetailsTool(DatabaseTool):
         table_name: str, 
         table_info: Dict[str, Any], 
         extra_info: Dict[str, Any],
-        dialect: str
+        dialect: str,
+        agent_feedback: Optional[str] = None
     ) -> ToolResult:
         """格式化结果输出"""
         # 提取信息
@@ -266,6 +274,10 @@ class GetTableDetailsTool(DatabaseTool):
             'constraints': constraints,
             **extra_info
         }
+        
+        # 如果有Agent反馈信息，包含在结果中让Agent知道情况
+        if agent_feedback:
+            llm_content['_multi_table_note'] = agent_feedback
         
         # 为显示准备格式化输出
         display_lines = [

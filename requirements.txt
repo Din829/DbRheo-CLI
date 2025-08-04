@@ -18,8 +18,11 @@ aiosqlite==0.21.0
     # via -r requirements.in
 annotated-types==0.7.0
     # via pydantic
+anthropic==0.34.0
+    # via -r requirements.in
 anyio==4.9.0
     # via
+    #   anthropic
     #   httpx
     #   openai
     #   starlette
@@ -78,6 +81,8 @@ google-auth-httplib2==0.2.0
     # via google-api-python-client
 google-generativeai==0.8.5
     # via -r requirements.in
+google-genai==1.28.0
+    # via -r requirements.in (新SDK，支持显式缓存，需要在2025年8月31日前迁移)
 googleapis-common-protos==1.70.0
     # via
     #   google-api-core

@@ -17,7 +17,8 @@ ENV_VARS = {
     'SHOW_THOUGHTS': 'DBRHEO_SHOW_THOUGHTS',
     'MAX_WIDTH': 'DBRHEO_MAX_WIDTH',
     'MAX_HISTORY': 'DBRHEO_MAX_HISTORY',
-    'HISTORY_FILE': 'DBRHEO_HISTORY_FILE'
+    'HISTORY_FILE': 'DBRHEO_HISTORY_FILE',
+    'MODEL': 'DBRHEO_MODEL'  # 模型选择
 }
 
 # 默认配置值
@@ -37,7 +38,10 @@ COMMANDS = {
     'HELP': ['/help'],
     'CLEAR': ['/clear'],
     'DEBUG': ['/debug'],
-    'LANG': ['/lang', '/language']
+    'LANG': ['/lang', '/language'],
+    'MODEL': ['/model'],  # 模型切换
+    'TOKEN': ['/token'],  # Token 统计
+    'DATABASE': ['/database', '/db']  # 数据库连接
 }
 
 # 确认关键词
@@ -58,4 +62,13 @@ DEBUG_LEVEL_RANGE = (0, 5)
 # 文件路径
 PATHS = {
     'SRC_ROOT': lambda: os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+}
+
+# 支持的模型列表
+SUPPORTED_MODELS = {
+    'gemini': 'Gemini 2.5 Flash',
+    'claude': 'Claude Sonnet 4',
+    'sonnet3.7': 'Claude 3.7',
+    'gpt': 'GPT-4.1',
+    'gpt-mini': 'GPT-4.1 Mini'
 }

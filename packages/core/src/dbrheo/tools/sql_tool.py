@@ -177,10 +177,11 @@ class SQLTool(DatabaseTool):
                 sql_metadata = await adapter.parse_sql(sql)
                 
                 # 基于解析结果判断操作类型
-                # 保守处理：如果是UNKNOWN但包含SELECT关键词，也视为查询
+                # 查询类型：SELECT、SHOW、DESCRIBE、EXPLAIN、ANALYZE 等返回结果集的命令
                 sql_type = sql_metadata.get('sql_type', 'UNKNOWN')
-                is_query = sql_type == 'SELECT' or (
-                    sql_type == 'UNKNOWN' and 'SELECT' in sql.upper()
+                query_types = {'SELECT', 'SHOW', 'DESCRIBE', 'DESC', 'EXPLAIN', 'ANALYZE'}
+                is_query = sql_type in query_types or (
+                    sql_type == 'UNKNOWN' and any(keyword in sql.upper() for keyword in ['SELECT', 'SHOW', 'DESCRIBE', 'EXPLAIN'])
                 )
                 
                 if is_query:
