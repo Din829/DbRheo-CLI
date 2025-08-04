@@ -21,6 +21,7 @@ pip install -r requirements.txt
 # 3. 環境設定
 cp .env.example .env
 # .envファイルでGOOGLE_API_KEY、OPENAI_API_KEYいずれを設定
+#　.env.exampleの他の内容は修正不要
 #　現時点でClaudeモデルはPromptCashingが適用されていませんのでおすすめしません
 
 
