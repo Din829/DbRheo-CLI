@@ -135,17 +135,48 @@ class MCPConfig:
             configs.append(("user", user_config))
         
         # 3. Workspace level configuration (including .dbrheo.json)
-        workspace_configs = [
-            ".dbrheo.json",  # New JSON config file
-            ".dbrheo/mcp.yaml",
-            ".dbrheo.mcp.yaml",
-            "mcp.yaml"
-        ]
-        for config_file in workspace_configs:
-            workspace_config = self._load_from_file(config_file)
-            if workspace_config:
-                configs.append(("workspace", workspace_config))
+        # First try to find project root
+        current_dir = Path.cwd()
+        workspace_config = None
+        
+        # Search for config file in project root first
+        for parent in [current_dir] + list(current_dir.parents):
+            # Check if this is the project root
+            if (parent / "pyproject.toml").exists() and (parent / "packages").exists():
+                # Try config files in project root
+                for config_name in [".dbrheo.json", ".dbrheo/mcp.yaml", "mcp.yaml"]:
+                    config_path = parent / config_name
+                    if config_path.exists():
+                        workspace_config = self._load_from_file(str(config_path))
+                        if workspace_config:
+                            configs.append(("workspace", workspace_config))
+                            break
                 break
+            # Special case: if we're in packages/cli, look in project root
+            elif parent.name == "cli" and parent.parent.name == "packages":
+                project_root = parent.parent.parent
+                for config_name in [".dbrheo.json", ".dbrheo/mcp.yaml", "mcp.yaml"]:
+                    config_path = project_root / config_name
+                    if config_path.exists():
+                        workspace_config = self._load_from_file(str(config_path))
+                        if workspace_config:
+                            configs.append(("workspace", workspace_config))
+                            break
+                break
+        
+        # If not found in project root, try current directory
+        if not workspace_config:
+            workspace_configs = [
+                ".dbrheo.json",  # New JSON config file
+                ".dbrheo/mcp.yaml",
+                ".dbrheo.mcp.yaml",
+                "mcp.yaml"
+            ]
+            for config_file in workspace_configs:
+                workspace_config = self._load_from_file(config_file)
+                if workspace_config:
+                    configs.append(("workspace", workspace_config))
+                    break
         
         # 4. Environment variable configuration
         env_config = self._load_from_env()
@@ -287,7 +318,26 @@ class MCPConfig:
     
     def _save_to_json(self):
         """Save current configuration to .dbrheo.json file."""
-        config_file = Path(".dbrheo.json")
+        # Find the project root by looking for .dbrheo.json upwards
+        current_dir = Path.cwd()
+        config_file = None
+        
+        # Search for project root (where pyproject.toml or packages/ exists)
+        for parent in [current_dir] + list(current_dir.parents):
+            # Check if this is the project root
+            if (parent / "pyproject.toml").exists() and (parent / "packages").exists():
+                # This is definitely the project root
+                config_file = parent / ".dbrheo.json"
+                break
+            # Also check if we're inside packages/cli and need to go up
+            elif parent.name == "cli" and parent.parent.name == "packages":
+                # Go up to project root
+                config_file = parent.parent.parent / ".dbrheo.json"
+                break
+        
+        # Fallback to current directory if no project root found
+        if config_file is None:
+            config_file = Path.cwd() / ".dbrheo.json"
         
         try:
             # Load existing config or create new one

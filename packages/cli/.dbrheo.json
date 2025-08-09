@@ -1,18 +1,11 @@
 {
   "mcp_servers": {
-    "puppeteer": {
+    "filesystem": {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ],
-      "trust": false,
-      "enabled": true
-    },
-    "itxo-cloud-monitor": {
-      "command": "python",
-      "args": [
-        "c:\\users\\q9951\\desktop\\mcp\\itxo-cloud-monitor-mcp\\server.py"
+        "@modelcontextprotocol/server-filesystem",
+        "/tmp"
       ],
       "trust": false,
       "enabled": true
