@@ -30,11 +30,21 @@ class DatabaseClient:
         self.chat = DatabaseChat(config)
         # 保存已完成的工具调用
         self.completed_tool_calls = []
+        
+        # 创建工具注册表（单例模式，最小侵入性）
+        from ..tools.registry import DatabaseToolRegistry
+        self.tool_registry = DatabaseToolRegistry(config)
+        # 将 tool_registry 设置到 config 中供其他组件使用
+        config.set_test_config('tool_registry', self.tool_registry)
+        
         # 创建调度器时设置回调
         self.tool_scheduler = DatabaseToolScheduler(
             config,
             on_all_tools_complete=self._on_tools_complete
         )
+        # 将 tool_registry 传递给调度器（最小侵入性）
+        self.tool_scheduler.tool_registry = self.tool_registry
+        
         self.session_turn_count = 0
         self.token_statistics = TokenStatistics()  # Token 使用统计
         # 缓存的JSON生成服务（最小侵入性优化）

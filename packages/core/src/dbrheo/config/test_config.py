@@ -106,6 +106,18 @@ class TestDatabaseConfig(DatabaseConfig):
         else:
             self.config_sources.insert(0, TestConfigSource(self._test_overrides))
     
+    def get_test_config(self, key: str) -> Optional[Any]:
+        """
+        获取测试配置
+        
+        参数:
+            key: 配置键
+            
+        返回:
+            配置值，如果不存在返回 None
+        """
+        return self._test_overrides.get(key)
+    
     def get_test_overrides(self) -> Dict[str, Any]:
         """获取当前的测试覆盖配置（用于调试）"""
         return self._test_overrides.copy()

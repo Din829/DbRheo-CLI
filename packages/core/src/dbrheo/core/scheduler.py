@@ -55,8 +55,12 @@ class DatabaseToolScheduler:
             raise Exception("Cannot schedule new tool calls while others are running")
             
         # 1. 批量创建工具调用
-        from ..tools.registry import DatabaseToolRegistry
-        tool_registry = DatabaseToolRegistry(self.config)
+        # 使用已经初始化的 tool_registry（最小侵入性）
+        tool_registry = self.tool_registry
+        if not tool_registry:
+            # 兼容性：如果没有设置 tool_registry，创建新的
+            from ..tools.registry import DatabaseToolRegistry
+            tool_registry = DatabaseToolRegistry(self.config)
         
         new_tool_calls = []
         for request in requests:

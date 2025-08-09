@@ -312,6 +312,8 @@ class DbRheoCLI:
             self._handle_token_command()
         elif cmd in COMMANDS['DATABASE']:
             self._handle_database_command()
+        elif cmd.startswith(COMMANDS['MCP'][0]):
+            await self._handle_mcp_command(cmd)
         else:
             console.print(f"[yellow]{_('unknown_command', command=command)}[/yellow]")
     
@@ -446,6 +448,217 @@ class DbRheoCLI:
             self._show_token_statistics(self.client.token_statistics)
         else:
             console.print(f"[yellow]{_('token_statistics_unavailable')}[/yellow]")
+    
+    async def _handle_mcp_command(self, cmd: str):
+        """处理 MCP 命令"""
+        parts = cmd.split()
+        
+        # 获取工具注册表
+        tool_registry = self.client.tool_registry if hasattr(self.client, 'tool_registry') else None
+        if not tool_registry:
+            console.print(f"[yellow]{_('mcp_support_not_available')}[/yellow]")
+            return
+        
+        # 尝试获取 MCP 注册表
+        mcp_registry = tool_registry.get_mcp_registry()
+        
+        if len(parts) == 1:
+            # 显示 MCP 状态和帮助
+            await self._show_mcp_status(mcp_registry)
+        elif len(parts) >= 2:
+            action = parts[1].lower()
+            
+            if action == 'list':
+                await self._show_mcp_servers(mcp_registry)
+            elif action == 'add':
+                if len(parts) >= 3:
+                    await self._add_mcp_server(mcp_registry, parts[2:])
+                else:
+                    console.print(f"[yellow]{_('mcp_add_usage')}[/yellow]")
+            elif action == 'remove':
+                if len(parts) >= 3:
+                    await self._remove_mcp_server(mcp_registry, parts[2])
+                else:
+                    console.print(f"[yellow]{_('mcp_remove_usage')}[/yellow]")
+            elif action == 'reload':
+                await self._reload_mcp_servers(mcp_registry, tool_registry)
+            elif action == 'help':
+                self._show_mcp_help()
+            else:
+                console.print(f"[yellow]{_('mcp_unknown_action', action=action)}[/yellow]")
+                self._show_mcp_help()
+    
+    async def _show_mcp_status(self, mcp_registry):
+        """显示 MCP 状态"""
+        if not mcp_registry:
+            # MCP 未初始化，尝试初始化
+            tool_registry = self.client.tool_registry
+            console.print(f"[cyan]{_('mcp_initializing')}[/cyan]")
+            success = await tool_registry.initialize_mcp()
+            
+            if success:
+                mcp_registry = tool_registry.get_mcp_registry()
+                console.print(f"[green]{_('mcp_initialized')}[/green]")
+            else:
+                console.print(f"[yellow]{_('mcp_not_available_install')}[/yellow]")
+                return
+        
+        # 显示服务器状态
+        if mcp_registry:
+            statuses = mcp_registry.get_all_server_statuses()
+            
+            if statuses:
+                console.print(f"\n[bold]{_('mcp_servers_title')}[/bold]")
+                for name, status in statuses.items():
+                    status_icon = {
+                        'connected': '🟢',
+                        'connecting': '🔄',
+                        'disconnected': '🔴',
+                        'error': '❌'
+                    }.get(status.value, '❓')
+                    
+                    tools = mcp_registry.get_server_tools(name)
+                    console.print(f"  {status_icon} {name} - {status.value} ({len(tools)} {_('mcp_tools')})")
+            else:
+                console.print(f"[dim]{_('mcp_no_servers')}[/dim]")
+                console.print(f"\n{_('mcp_add_server_hint')}")
+                console.print(f"{_('mcp_add_server_example')}")
+    
+    async def _show_mcp_servers(self, mcp_registry):
+        """显示 MCP 服务器列表"""
+        if not mcp_registry:
+            console.print(f"[yellow]{_('mcp_not_initialized')}[/yellow]")
+            return
+        
+        await self._show_mcp_status(mcp_registry)
+    
+    async def _add_mcp_server(self, mcp_registry, args):
+        """添加 MCP 服务器"""
+        if not mcp_registry:
+            console.print(f"[yellow]{_('mcp_not_initialized')}[/yellow]")
+            return
+        
+        if len(args) < 2:
+            console.print(f"[yellow]{_('mcp_add_usage')}[/yellow]")
+            return
+        
+        name = args[0]
+        remaining_args = args[1:]
+        
+        # Flexible parsing to support various formats
+        # Examples:
+        # 1. /mcp add filesystem npx -y @modelcontextprotocol/server-filesystem /tmp
+        # 2. /mcp add filesystem 'npx -y @modelcontextprotocol/server-filesystem /tmp'
+        # 3. /mcp add filesystem npx @modelcontextprotocol/server-filesystem /tmp
+        # 4. /mcp add api https://api.example.com
+        # 5. /mcp add puppeteer "npx -y @modelcontextprotocol/server-puppeteer"
+        
+        import shlex
+        from dbrheo.tools.mcp import MCPServerConfig
+        
+        # First, join all remaining args to handle various input styles
+        full_command = ' '.join(remaining_args)
+        
+        # Check if it's a URL (for HTTP/SSE servers)
+        if full_command.startswith(('http://', 'https://', 'ws://', 'wss://')):
+            config = MCPServerConfig(url=full_command)
+        else:
+            # It's a command - parse intelligently
+            # Try to detect if the whole thing is quoted
+            if len(remaining_args) == 1:
+                # Single argument, might be quoted
+                try:
+                    command_parts = shlex.split(remaining_args[0])
+                except:
+                    command_parts = remaining_args[0].split()
+            else:
+                # Multiple arguments
+                # Check if first arg is the command and rest are args
+                command = remaining_args[0]
+                
+                # Special handling for npx commands
+                if command == 'npx':
+                    # This is an npx command
+                    config = MCPServerConfig(
+                        command='npx',
+                        args=remaining_args[1:]  # Everything after npx
+                    )
+                elif command == 'node' or command == 'python' or command == 'python3':
+                    # Other common commands
+                    config = MCPServerConfig(
+                        command=command,
+                        args=remaining_args[1:]
+                    )
+                else:
+                    # Try to parse as a full command string
+                    try:
+                        command_parts = shlex.split(full_command)
+                    except:
+                        command_parts = full_command.split()
+                    
+                    if command_parts:
+                        config = MCPServerConfig(
+                            command=command_parts[0],
+                            args=command_parts[1:] if len(command_parts) > 1 else []
+                        )
+                    else:
+                        console.print(f"[red]{_('mcp_invalid_command')}[/red]")
+                        return
+        
+        console.print(f"[cyan]{_('mcp_adding_server', name=name)}[/cyan]")
+        await mcp_registry.add_server(name, config, self.client.tool_registry)
+        console.print(f"[green]{_('mcp_server_added', name=name)}[/green]")
+    
+    async def _remove_mcp_server(self, mcp_registry, name):
+        """移除 MCP 服务器"""
+        if not mcp_registry:
+            console.print(f"[yellow]{_('mcp_not_initialized')}[/yellow]")
+            return
+        
+        console.print(f"[cyan]{_('mcp_removing_server', name=name)}[/cyan]")
+        await mcp_registry.remove_server(name, self.client.tool_registry)
+        console.print(f"[green]{_('mcp_server_removed', name=name)}[/green]")
+    
+    async def _reload_mcp_servers(self, mcp_registry, tool_registry):
+        """重新加载 MCP 服务器"""
+        console.print(f"[cyan]{_('mcp_reloading')}[/cyan]")
+        
+        if mcp_registry:
+            await mcp_registry.refresh(tool_registry)
+        else:
+            await tool_registry.initialize_mcp()
+        
+        console.print(f"[green]{_('mcp_reloaded')}[/green]")
+    
+    def _show_mcp_help(self):
+        """显示 MCP 帮助信息"""
+        help_text = f"""
+[bold]{_('mcp_help_title')}[/bold]
+
+  [cyan]/mcp[/cyan]                    - {_('mcp_help_status')}
+  [cyan]/mcp list[/cyan]              - {_('mcp_help_list')}
+  [cyan]/mcp add <name> <cmd>[/cyan]  - {_('mcp_help_add')}
+  [cyan]/mcp remove <name>[/cyan]      - {_('mcp_help_remove')}
+  [cyan]/mcp reload[/cyan]            - {_('mcp_help_reload')}
+  [cyan]/mcp help[/cyan]              - {_('mcp_help_help')}
+
+[bold]{_('mcp_help_examples')}[/bold]
+  [dim]# NPX servers (multiple formats supported):[/dim]
+  /mcp add filesystem npx -y @modelcontextprotocol/server-filesystem /tmp
+  /mcp add puppeteer 'npx -y @modelcontextprotocol/server-puppeteer'
+  /mcp add github npx @modelcontextprotocol/server-github
+  
+  [dim]# HTTP/WebSocket servers:[/dim]
+  /mcp add api https://api.example.com/mcp
+  /mcp add ws wss://example.com/mcp
+  
+  [dim]# Other command servers:[/dim]
+  /mcp add custom python3 /path/to/mcp_server.py --port 3000
+  /mcp add myserver node server.js
+
+[dim]{_('mcp_help_note')}[/dim]
+"""
+        console.print(help_text)
     
     def _show_token_statistics(self, stats):
         """显示 token 统计信息"""

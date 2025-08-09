@@ -44,6 +44,13 @@ class ToolCapability(Enum):
     # 安全能力
     AUDIT = "audit"                    # 审计日志
     PERMISSION = "permission"          # 权限管理
+    
+    # 外部集成能力
+    EXTERNAL = "external"              # 外部工具
+    MCP = "mcp"                        # MCP协议工具
+    CODE_EXECUTION = "code_execution"  # 代码执行
+    WEB_ACCESS = "web_access"          # Web访问
+    FILE_OPERATION = "file_operation"  # 文件操作
 
 
 @dataclass
@@ -76,6 +83,9 @@ class DatabaseToolRegistry:
         
         # 从config获取i18n（如果有）
         self._i18n = config.get('i18n', None)
+        
+        # MCP registry (lazy initialization)
+        self._mcp_registry = None
         
         # 注册核心工具
         self._register_core_tools()
@@ -500,3 +510,32 @@ class DatabaseToolRegistry:
             })
             
         return declarations
+    
+    async def initialize_mcp(self):
+        """
+        初始化 MCP 支持（异步方法）
+        最小侵入性设计：只在需要时加载 MCP 模块
+        """
+        try:
+            # 动态导入 MCP 模块（避免强依赖）
+            from .mcp import MCPRegistry
+            
+            # 创建 MCP 注册表
+            self._mcp_registry = MCPRegistry(self.config)
+            
+            # 初始化并注册 MCP 工具
+            await self._mcp_registry.initialize(self)
+            
+            return True
+        except ImportError:
+            # MCP 模块不存在或依赖未安装，静默失败
+            return False
+        except Exception as e:
+            # 其他错误，记录但不中断系统
+            import logging
+            logging.warning(f"Failed to initialize MCP: {e}")
+            return False
+    
+    def get_mcp_registry(self):
+        """获取 MCP 注册表（如果已初始化）"""
+        return self._mcp_registry

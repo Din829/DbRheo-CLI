@@ -41,7 +41,8 @@ COMMANDS = {
     'LANG': ['/lang', '/language'],
     'MODEL': ['/model'],  # 模型切换
     'TOKEN': ['/token'],  # Token 统计
-    'DATABASE': ['/database', '/db']  # 数据库连接
+    'DATABASE': ['/database', '/db'],  # 数据库连接
+    'MCP': ['/mcp']  # MCP 服务器管理
 }
 
 # 确认关键词

@@ -24,7 +24,12 @@
       "WebFetch(domain:googleapis.github.io)",
       "Bash(/mnt/c/Users/q9951/anaconda3/python.exe test_config_priority.py)",
       "Bash(/mnt/c/Users/q9951/anaconda3/python.exe test_cache_with_system.py)",
-      "Bash(/mnt/c/Users/q9951/anaconda3/Scripts/pip.exe show google-genai)"
+      "Bash(/mnt/c/Users/q9951/anaconda3/Scripts/pip.exe show google-genai)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/python.exe -m dbrheo_cli.main --debug --no-color)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/python.exe src/dbrheo_cli/main.py --help)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/Scripts/pip.exe install -e packages/core)",
+      "Bash(/mnt/c/Users/q9951/anaconda3/Scripts/pip.exe install -e packages/cli)",
+      "WebFetch(domain:modelcontextprotocol.io)"
     ],
     "deny": []
   }

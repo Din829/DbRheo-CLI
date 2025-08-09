@@ -1,0 +1,417 @@
+"""
+MCP client management for DbRheo.
+
+Manages MCP client connections, discovery, and lifecycle.
+"""
+
+import asyncio
+from enum import Enum
+from typing import Dict, List, Optional, Any, Callable
+from dataclasses import dataclass
+import shlex
+from ...telemetry.logger import get_logger
+from .mcp_config import MCPServerConfig
+
+logger = get_logger(__name__)
+
+# Check if MCP SDK is available
+try:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    MCP_AVAILABLE = True
+except ImportError as e:
+    MCP_AVAILABLE = False
+    logger.info(f"MCP SDK not installed or import failed: {e}. MCP features will be disabled.")
+    # Define dummy classes for type hints
+    class ClientSession: pass
+    class StdioServerParameters: pass
+
+
+class MCPServerStatus(Enum):
+    """Status of an MCP server connection."""
+    DISCONNECTED = "disconnected"
+    CONNECTING = "connecting"
+    CONNECTED = "connected"
+    ERROR = "error"
+
+
+class MCPDiscoveryState(Enum):
+    """Overall MCP discovery state."""
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass
+class MCPToolInfo:
+    """Information about a discovered MCP tool."""
+    name: str
+    display_name: str
+    description: str
+    parameters: Dict[str, Any]
+    server_name: str
+    original_name: str  # Original tool name from MCP server
+
+
+class MCPClientManager:
+    """Manages MCP client connections and tool discovery."""
+    
+    def __init__(self):
+        """Initialize the MCP client manager."""
+        self.clients: Dict[str, Client] = {}
+        self.transports: Dict[str, Any] = {}
+        self.server_statuses: Dict[str, MCPServerStatus] = {}
+        self.discovered_tools: Dict[str, List[MCPToolInfo]] = {}
+        self.discovery_state = MCPDiscoveryState.NOT_STARTED
+        self.status_listeners: List[Callable[[str, MCPServerStatus], None]] = []
+        
+        # Check if MCP is available
+        if not MCP_AVAILABLE:
+            logger.warning(
+                "MCP SDK is not installed. Install with: pip install modelcontextprotocol"
+            )
+    
+    def add_status_listener(self, listener: Callable[[str, MCPServerStatus], None]):
+        """Add a listener for server status changes."""
+        self.status_listeners.append(listener)
+    
+    def remove_status_listener(self, listener: Callable[[str, MCPServerStatus], None]):
+        """Remove a status listener."""
+        if listener in self.status_listeners:
+            self.status_listeners.remove(listener)
+    
+    def _update_status(self, server_name: str, status: MCPServerStatus):
+        """Update server status and notify listeners."""
+        self.server_statuses[server_name] = status
+        for listener in self.status_listeners:
+            try:
+                listener(server_name, status)
+            except Exception as e:
+                logger.error(f"Error in status listener: {e}")
+    
+    def get_status(self, server_name: str) -> MCPServerStatus:
+        """Get the current status of a server."""
+        return self.server_statuses.get(server_name, MCPServerStatus.DISCONNECTED)
+    
+    def get_all_statuses(self) -> Dict[str, MCPServerStatus]:
+        """Get all server statuses."""
+        return self.server_statuses.copy()
+    
+    async def connect_server(self, server_name: str, config: MCPServerConfig) -> bool:
+        """
+        Connect to a single MCP server.
+        
+        Args:
+            server_name: Name of the server
+            config: Server configuration
+            
+        Returns:
+            True if connection successful, False otherwise
+        """
+        if not MCP_AVAILABLE:
+            logger.warning(f"Cannot connect to {server_name}: MCP SDK not available")
+            return False
+        
+        # Update status to connecting
+        self._update_status(server_name, MCPServerStatus.CONNECTING)
+        
+        try:
+            # Create transport based on configuration
+            transport = self._create_transport(config)
+            if not transport:
+                raise ValueError(f"No valid transport configuration for {server_name}")
+            
+            # Create MCP client
+            client = Client(
+                name="dbrheo-mcp-client",
+                version="1.0.0"
+            )
+            
+            # Set timeout
+            timeout = config.timeout or MCPServerConfig.DEFAULT_TIMEOUT_MS
+            
+            # Connect to the server
+            await client.connect(transport, timeout=timeout)
+            
+            # Store client and transport
+            self.clients[server_name] = client
+            self.transports[server_name] = transport
+            
+            # Set error handler
+            client.onerror = lambda error: self._handle_client_error(server_name, error)
+            
+            # Update status
+            self._update_status(server_name, MCPServerStatus.CONNECTED)
+            logger.info(f"Connected to MCP server '{server_name}'")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to connect to MCP server '{server_name}': {e}")
+            self._update_status(server_name, MCPServerStatus.ERROR)
+            
+            # Clean up on failure
+            await self._cleanup_server(server_name)
+            return False
+    
+    def _create_transport(self, config: MCPServerConfig) -> Optional[Any]:
+        """Create appropriate transport based on configuration."""
+        if not MCP_AVAILABLE:
+            return None
+        
+        try:
+            if config.command:
+                # Stdio transport - mcp 0.1.0 uses StdioServerParameters
+                params = StdioServerParameters(
+                    command=config.command,
+                    args=config.args or [],
+                    env={**os.environ, **(config.env or {})},
+                    cwd=config.cwd
+                )
+                return stdio_client(params)
+            elif config.url:
+                # SSE transport
+                options = {}
+                if config.headers:
+                    options['requestInit'] = {'headers': config.headers}
+                return SSEClientTransport(config.url, options)
+            elif config.http_url:
+                # Streamable HTTP transport
+                options = {}
+                if config.headers:
+                    options['requestInit'] = {'headers': config.headers}
+                return StreamableHTTPClientTransport(config.http_url, options)
+            else:
+                return None
+        except Exception as e:
+            logger.error(f"Failed to create transport: {e}")
+            return None
+    
+    def _handle_client_error(self, server_name: str, error: Any):
+        """Handle client error."""
+        logger.error(f"MCP client error for '{server_name}': {error}")
+        self._update_status(server_name, MCPServerStatus.ERROR)
+    
+    async def discover_tools(self, server_name: str) -> List[MCPToolInfo]:
+        """
+        Discover tools from a connected MCP server.
+        
+        Args:
+            server_name: Name of the server
+            
+        Returns:
+            List of discovered tools
+        """
+        if not MCP_AVAILABLE:
+            return []
+        
+        client = self.clients.get(server_name)
+        if not client:
+            logger.warning(f"No client found for server '{server_name}'")
+            return []
+        
+        discovered = []
+        
+        try:
+            # List available tools
+            tools_response = await client.list_tools()
+            
+            if not tools_response or not hasattr(tools_response, 'tools'):
+                logger.warning(f"No tools found on server '{server_name}'")
+                return []
+            
+            for tool in tools_response.tools:
+                # Create tool info
+                tool_info = MCPToolInfo(
+                    name=self._sanitize_tool_name(tool.name, server_name),
+                    display_name=f"{tool.name} ({server_name})",
+                    description=tool.description or "",
+                    parameters=self._convert_parameters(tool.inputSchema) if hasattr(tool, 'inputSchema') else {},
+                    server_name=server_name,
+                    original_name=tool.name
+                )
+                discovered.append(tool_info)
+                logger.debug(f"Discovered tool '{tool.name}' from '{server_name}'")
+            
+            # Store discovered tools
+            self.discovered_tools[server_name] = discovered
+            logger.info(f"Discovered {len(discovered)} tools from '{server_name}'")
+            
+        except Exception as e:
+            logger.error(f"Failed to discover tools from '{server_name}': {e}")
+        
+        return discovered
+    
+    def _sanitize_tool_name(self, name: str, server_name: str) -> str:
+        """
+        Sanitize tool name for use in the system.
+        
+        Args:
+            name: Original tool name
+            server_name: Name of the server
+            
+        Returns:
+            Sanitized tool name
+        """
+        # Replace invalid characters with underscores
+        sanitized = re.sub(r'[^a-zA-Z0-9_.-]', '_', name)
+        
+        # Add server prefix if needed to avoid conflicts
+        # This will be checked against existing tools in the registry
+        sanitized = f"{server_name}__{sanitized}"
+        
+        # Limit length (63 characters max for compatibility)
+        if len(sanitized) > 63:
+            # Keep beginning and end, replace middle with '___'
+            sanitized = sanitized[:28] + '___' + sanitized[-32:]
+        
+        return sanitized
+    
+    def _convert_parameters(self, schema: Any) -> Dict[str, Any]:
+        """Convert MCP parameter schema to internal format."""
+        if not schema:
+            return {"type": "object", "properties": {}}
+        
+        # Convert schema to dict if needed
+        if hasattr(schema, '__dict__'):
+            return schema.__dict__
+        
+        return schema
+    
+    async def call_tool(
+        self,
+        server_name: str,
+        tool_name: str,
+        parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Call a tool on an MCP server.
+        
+        Args:
+            server_name: Name of the server
+            tool_name: Original tool name
+            parameters: Tool parameters
+            
+        Returns:
+            Tool execution result
+        """
+        if not MCP_AVAILABLE:
+            return {
+                "error": "MCP SDK not available",
+                "success": False
+            }
+        
+        client = self.clients.get(server_name)
+        if not client:
+            return {
+                "error": f"No client connected for server '{server_name}'",
+                "success": False
+            }
+        
+        try:
+            # Call the tool
+            result = await client.call_tool(tool_name, parameters)
+            
+            # Convert result to standard format
+            if hasattr(result, 'content'):
+                return {
+                    "content": result.content,
+                    "success": True
+                }
+            else:
+                return {
+                    "content": str(result),
+                    "success": True
+                }
+            
+        except Exception as e:
+            logger.error(f"Failed to call tool '{tool_name}' on '{server_name}': {e}")
+            return {
+                "error": str(e),
+                "success": False
+            }
+    
+    async def disconnect_server(self, server_name: str):
+        """Disconnect from an MCP server."""
+        await self._cleanup_server(server_name)
+        self._update_status(server_name, MCPServerStatus.DISCONNECTED)
+        logger.info(f"Disconnected from MCP server '{server_name}'")
+    
+    async def _cleanup_server(self, server_name: str):
+        """Clean up server resources."""
+        # Close transport
+        if server_name in self.transports:
+            transport = self.transports[server_name]
+            try:
+                if hasattr(transport, 'close'):
+                    await transport.close()
+            except Exception as e:
+                logger.error(f"Error closing transport for '{server_name}': {e}")
+            del self.transports[server_name]
+        
+        # Remove client
+        if server_name in self.clients:
+            del self.clients[server_name]
+        
+        # Remove discovered tools
+        if server_name in self.discovered_tools:
+            del self.discovered_tools[server_name]
+    
+    async def disconnect_all(self):
+        """Disconnect from all MCP servers."""
+        servers = list(self.clients.keys())
+        for server_name in servers:
+            await self.disconnect_server(server_name)
+    
+    async def discover_all_servers(self, configs: Dict[str, MCPServerConfig]):
+        """
+        Connect to and discover tools from all configured servers.
+        
+        Args:
+            configs: Dictionary of server configurations
+        """
+        self.discovery_state = MCPDiscoveryState.IN_PROGRESS
+        
+        try:
+            # Connect to all servers in parallel
+            tasks = []
+            for server_name, config in configs.items():
+                if config.enabled:
+                    tasks.append(self._connect_and_discover(server_name, config))
+            
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+            
+            self.discovery_state = MCPDiscoveryState.COMPLETED
+            logger.info(f"MCP discovery completed for {len(configs)} servers")
+            
+        except Exception as e:
+            self.discovery_state = MCPDiscoveryState.FAILED
+            logger.error(f"MCP discovery failed: {e}")
+    
+    async def _connect_and_discover(self, server_name: str, config: MCPServerConfig):
+        """Connect to a server and discover its tools."""
+        try:
+            # Connect to server
+            connected = await self.connect_server(server_name, config)
+            
+            if connected:
+                # Discover tools
+                tools = await self.discover_tools(server_name)
+                
+                # If no tools found, disconnect to save resources
+                if not tools:
+                    logger.info(
+                        f"No tools found on '{server_name}', closing connection"
+                    )
+                    await self.disconnect_server(server_name)
+                    
+        except Exception as e:
+            logger.error(f"Failed to connect and discover '{server_name}': {e}")
+            self._update_status(server_name, MCPServerStatus.ERROR)
+
+
+# Import os and re if needed
+import os
+import re

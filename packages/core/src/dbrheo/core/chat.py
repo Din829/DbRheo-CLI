@@ -8,6 +8,7 @@ from ..types.core_types import Content, PartListUnion
 from ..config.base import DatabaseConfig
 from ..utils.debug_logger import DebugLogger, log_info
 from .prompts import DatabasePromptManager
+from ..tools.registry import DatabaseToolRegistry
 
 # 导入实时日志系统（如果启用）
 import os
@@ -260,7 +261,11 @@ class DatabaseChat:
             self._llm_service = create_llm_service(self.config)
             
             # 获取所有可用工具的函数声明
-            tool_registry = DatabaseToolRegistry(self.config)
+            # 优先使用共享的 tool_registry（最小侵入性）
+            tool_registry = self.config.get_test_config('tool_registry')
+            if not tool_registry:
+                # 兼容性：如果没有共享的，创建新的
+                tool_registry = DatabaseToolRegistry(self.config)
             self._tools = tool_registry.get_function_declarations()
             log_info("Chat", f"Loaded {len(self._tools)} tools")
             

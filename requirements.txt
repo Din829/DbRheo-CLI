@@ -134,6 +134,8 @@ markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
+mcp==1.0.0
+    # via -r requirements.in
 multidict==6.6.3
     # via
     #   aiohttp

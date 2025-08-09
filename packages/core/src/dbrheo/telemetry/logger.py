@@ -13,6 +13,19 @@ from pathlib import Path
 from ..config.base import DatabaseConfig
 
 
+def get_logger(name: str) -> logging.Logger:
+    """
+    获取标准日志器（最小侵入性添加）
+    
+    Args:
+        name: 日志器名称
+        
+    Returns:
+        标准 Python 日志器
+    """
+    return logging.getLogger(name)
+
+
 class DatabaseLogger:
     """
     数据库Agent结构化日志系统
