@@ -142,3 +142,6 @@ id_ed25519*
 **/credentials.yaml
 **/secrets.yaml
 **/passwords.txt
+
+# Promotion templates (keep private for customization)
+promotion_template_*.md

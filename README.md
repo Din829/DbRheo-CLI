@@ -1,6 +1,8 @@
 
 # DbRheoCLI - Database/Data Analysis Agent
 
+![DbRheo CLI Interface](https://github.com/Din829/DbRheo-CLI/blob/master/docs/images/dbrheo-cli-interface.png)
+
 DbRheo is a database operations and data analysis CLI agent that provides natural language database query execution, schema exploration, risk assessment capabilities, and Python-powered data analysis features.
 
 
