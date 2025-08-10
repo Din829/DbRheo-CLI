@@ -90,9 +90,9 @@ class I18n:
             'help_esc': '按 ESC 清空当前输入',
             'tool_confirmation_title': '工具确认',
             'tool_confirmation_help': '''当工具需要确认时：
-  - 输入 '1' 或 'confirm' 确认执行
-  - 输入 '2' 或 'cancel' 取消执行
-  - 输入 'confirm all' 确认所有待执行工具''',
+  • 输入 '1' 或 'confirm' 确认执行
+  • 输入 '2' 或 'cancel' 取消执行
+  • 输入 'confirm all' 确认所有待执行工具''',
             
             # 工具相关
             'tool_confirm_title': '工具需要确认: {tool_name}',
@@ -475,9 +475,9 @@ class I18n:
             'help_esc': 'ESCキーで入力をクリア',
             'tool_confirmation_title': 'ツール確認',
             'tool_confirmation_help': '''ツール確認が必要な場合:
-  - '1' または 'confirm' で実行を確認
-  - '2' または 'cancel' で実行をキャンセル
-  - 'confirm all' ですべての待機中ツールを確認''',
+  • '1' または 'confirm' で実行を確認
+  • '2' または 'cancel' で実行をキャンセル
+  • 'confirm all' ですべての待機中ツールを確認''',
             
             # 工具相关
             'tool_confirm_title': 'ツール確認が必要です: {tool_name}',
@@ -1095,9 +1095,9 @@ class I18n:
             'help_esc': 'Press ESC to clear input',
             'tool_confirmation_title': 'Tool Confirmation',
             'tool_confirmation_help': '''When tool confirmation is required:
-  - Enter '1' or 'confirm' to confirm execution
-  - Enter '2' or 'cancel' to cancel execution
-  - Enter 'confirm all' to confirm all pending tools''',
+  • Enter '1' or 'confirm' to confirm execution
+  • Enter '2' or 'cancel' to cancel execution
+  • Enter 'confirm all' to confirm all pending tools''',
             
             # 工具相关
             'tool_confirm_title': 'Tool requires confirmation: {tool_name}',

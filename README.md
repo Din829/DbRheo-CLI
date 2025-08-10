@@ -1,179 +1,209 @@
 
-# DbRheoCLI - DataBase/DataAnalysis エージェント
+# DbRheoCLI - Database/Data Analysis Agent
 
-DbRheoは、データベース操作/データ分析CLIエージェントです。自然言語でのデータベースクエリ実行、スキーマ探索、リスク評価機能、またPythonを使ってデータ分析能力を提供します。
+DbRheo is a database operations and data analysis CLI agent that provides natural language database query execution, schema exploration, risk assessment capabilities, and Python-powered data analysis features.
 
-## ⚠️ 注意事項
 
-**Google APIの不安定性について**: 初回対話入力後、Google APIの応答が不安定なため処理が停止する場合があります。その際は`Ctrl+C`でプロセスを終了し、python cli.pyで再度メッセージを送信してください。
-
-## クイックスタート
+## Quick Start
 
 ```bash
-# 1. リポジトリのクローン
+# 1. Clone the repository
 git clone https://github.com/Din829/DbRheo-CLI.git
 cd DbRheo-CLI
 
-# 2. Dependenciesのインストール
+# 2. Install dependencies
 pip install -r requirements.txt
 
 
-# 3. 環境設定
+# 3. Environment setup
 cp .env.example .env
-# .envファイルでGOOGLE_API_KEY、OPENAI_API_KEYいずれを設定
-#　.env.exampleの他の内容は修正不要
-#　現時点でClaudeモデルはPromptCashingが適用されていませんのでおすすめしません
+# Set either GOOGLE_API_KEY or OPENAI_API_KEY in the .env file
+# No need to modify other contents in .env.example
+# Claude models are not recommended at this time as PromptCaching is not yet applied
 
 
-# 4. CLI起動
+# 4. Launch CLI
 cd packages/cli
 python cli.py
 ```
 
-## 主要機能
+## Key Features
 
-### コア機能
-- **自然言語クエリ処理**: 日本語でのデータベース操作指示
-- **インテリジェントSQL生成**: 安全で最適化されたクエリの自動生成
-- **スキーマ自動探索**: データベース構造の動的解析
-- **リスク評価システム**: 危険な操作の事前検出と警告
-- **Pythonコード実行**: データ分析、可視化、自動化スクリプトの実行
-- **データエクスポート**: CSV、JSON、Excel形式での結果出力
+### Core Capabilities
+- **Natural Language Query Processing**: Database operation instructions in natural language
+- **Intelligent SQL Generation**: Automatic generation of safe and optimized queries
+- **Automatic Schema Discovery**: Dynamic analysis of database structures
+- **Risk Assessment System**: Pre-detection and warnings for dangerous operations
+- **Python Code Execution**: Data analysis, visualization, and automation script execution
+- **Data Export**: Result output in CSV, JSON, and Excel formats
 
-### 技術特徴
-- **非同期処理**: 高性能なasync/await実装
-- **マルチデータベース対応**: PostgreSQL、MySQL、SQLite対応
-- **モジュラー設計**: 拡張可能なプラグインアーキテクチャ
-- **包括的ログ**: 詳細な操作履歴とデバッグ情報
-- **インテリジェント入力**: 自動多行検出、ペースト処理
-- **ストリーミング出力**: リアルタイムレスポンス表示
-- **国際化対応**: 多言語サポート（日本語、英語）
+### Technical Features
+- **Asynchronous Processing**: High-performance async/await implementation
+- **Multi-Database Support**: PostgreSQL, MySQL, SQLite compatibility
+- **Modular Design**: Extensible plugin architecture
+- **Comprehensive Logging**: Detailed operation history and debug information
+- **Intelligent Input**: Automatic multi-line detection and paste processing
+- **Streaming Output**: Real-time response display
+- **Internationalization**: Multi-language support (Japanese, English)
 
-## システム要件
+## System Requirements
 
-### 必須環境
-- Python 3.9以上
-- Node.js 20以上（Web UI開発時のみ）
+### Required Environment
+- Python 3.9 or higher
+- Node.js 20 or higher (only for Web UI development)
 
-### 対応データベース（DEMOのため、今後拡張予定）
-- PostgreSQL 12以上
-- MySQL 8.0以上
-- SQLite 3.35以上
+### Supported Databases
+Currently supports 3 main database types (more can be added via adapter interface):
+- **PostgreSQL** 12+ (via asyncpg driver)
+- **MySQL/MariaDB** 8.0+ (via aiomysql driver)
+- **SQLite** 3.35+ (via aiosqlite driver)
 
-## インストール手順
+*Note: Additional database types can be easily integrated through the adapter factory pattern. The system supports dynamic adapter registration and automatic driver detection.*
 
-### 1. リポジトリのクローン
+## Installation Guide
+
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/Din829/DbRheo-CLI.git
 cd DbRheo-CLI
 ```
 
-または
+Alternative:
 https://dev.azure.com/HPSMDI/POC_Agent/_git/db-rheo-cli
-　
 
-### 2. Python環境の構築
+
+### 2. Python Environment Setup
 ```bash
 
-# 依存関係のインストール
+# Install dependencies
 pip install -r requirements.txt
 
 ```
 
-### 3. パッケージのインストール（オプション）
+### 3. Package Installation (Optional)
 ```bash
-# コアパッケージのインストール
+# Install core package
 cd packages/core
 pip install -e .
 cd ../..
 
-# CLIパッケージのインストール
+# Install CLI package
 cd packages/cli
 pip install -e .
 cd ../..
 
-# インストール確認
+# Verify installation
 pip show dbrheo-core dbrheo-cli
 ```
 
-**注意**: パッケージをインストールしなくても、開発モードで直接実行できます。
+**Note**: You can run directly in development mode without installing packages.
 
-### 4. 環境設定
+### 4. Environment Configuration
 ```bash
-# 設定ファイルのコピー
+# Copy configuration file
 cp .env.example .env
 
-# .envファイルを編集し、以下を設定:
-# - Google API キー
-# - データベース接続情報
+# Edit the .env file and configure:
+# - Google API key
+# - Database connection information
 ```
 
-## 起動方法
+### 5. Test Data
+The `testdata/` directory contains sample datasets for testing the agent:
+- **adult.data**: Adult Census Income dataset for data analysis testing
+- **adult.names**: Dataset description and column information
+- **adult.test**: Test dataset for validation
+- Additional sample files for various testing scenarios
 
-### CLIモードでの起動
+You can use these datasets to test DbRheo's data analysis capabilities and SQL generation features.
 
-#### パッケージインストール後
+## Launch Methods
 
-# ヘルプ表示
+### CLI Mode Launch
+
+#### After Package Installation
+
+```bash
+# Display help
 /help
 
-#　モデル指定
+# Specify model
 /model
 ```
 
 
 
 
-## 使用方法
+## Usage Examples
 
-### 基本的な対話例
+### Basic Conversation Examples
 ```
-DbRheo> ユーザーテーブルの構造を教えて
-[スキーマ探索を実行中...]
-テーブル 'users' の構造:
-- id: INTEGER (主キー)
+DbRheo> Tell me about the structure of the users table
+[Executing schema exploration...]
+Structure of table 'users':
+- id: INTEGER (Primary Key)
 - name: VARCHAR(100)
 - email: VARCHAR(255)
 - created_at: TIMESTAMP
 
-DbRheo> 最新の10件のユーザーを表示して
-[SQLクエリを生成中...]
+DbRheo> Show me the latest 10 users
+[Generating SQL query...]
 SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
-[実行結果を表示...]
+[Displaying execution results...]
 ```
 
-### データ分析機能
+### Data Analysis Features
 ```
-DbRheo> 売上データをPythonで分析して可視化して
-[Pythonコードを生成中...]
+DbRheo> Analyze and visualize sales data using Python
+[Generating Python code...]
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# データベースから売上データを取得
+# Retrieve sales data from database
 df = pd.read_sql("SELECT * FROM sales", connection)
 
-# 月別売上集計
+# Monthly sales aggregation
 monthly_sales = df.groupby('month')['amount'].sum()
 
-# グラフ作成
+# Create graph
 plt.figure(figsize=(10, 6))
 monthly_sales.plot(kind='bar')
-plt.title('月別売上推移')
+plt.title('Monthly Sales Trends')
 plt.savefig('sales_analysis.png')
 
-[実行結果: グラフファイル sales_analysis.png を生成しました]
+[Execution result: Generated graph file sales_analysis.png]
 ```
 
-### 高度なSQL機能
+### Advanced SQL Features
 ```
-DbRheo> 売上データの月別集計を作成
-[複雑なクエリを生成中...]
+DbRheo> Create monthly aggregation of sales data
+[Generating complex query...]
 SELECT
     DATE_TRUNC('month', order_date) as month,
     SUM(amount) as total_sales
 FROM orders
 GROUP BY month
 ORDER BY month;
+```
+
+### Testing with Sample Data
+```
+DbRheo> Load the adult dataset from testdata and analyze income distribution
+[Loading data from testdata/adult.data...]
+[Generating analysis code...]
+import pandas as pd
+
+# Load the adult census dataset
+df = pd.read_csv('testdata/adult.data', header=None)
+# Apply column names from adult.names
+df.columns = ['age', 'workclass', 'fnlwgt', 'education', ...]
+
+# Analyze income distribution
+income_dist = df['income'].value_counts()
+print("Income Distribution:")
+print(income_dist)
+
+[Execution result: Income analysis completed]
 ```
 
 

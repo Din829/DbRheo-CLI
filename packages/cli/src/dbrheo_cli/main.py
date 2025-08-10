@@ -14,6 +14,26 @@ from typing import Optional
 import click
 from rich.console import Console
 
+
+def preprocess_language_args():
+    """预处理语言参数，设置环境变量（最小侵入性实现）"""
+    for i, arg in enumerate(sys.argv):
+        if arg in ['--lang', '--language'] and i + 1 < len(sys.argv):
+            lang_value = sys.argv[i + 1].lower()
+            lang_map = {
+                'zh': 'zh_CN', 'cn': 'zh_CN', 'zh_cn': 'zh_CN',
+                'ja': 'ja_JP', 'jp': 'ja_JP', 'ja_jp': 'ja_JP',
+                'en': 'en_US', 'us': 'en_US', 'en_us': 'en_US'
+            }
+            lang_code = lang_map.get(lang_value, lang_value)
+            if lang_code in ['zh_CN', 'ja_JP', 'en_US']:
+                os.environ['DBRHEO_LANG'] = lang_code
+            break
+
+
+# 在所有导入前预处理语言参数
+preprocess_language_args()
+
 # 设置默认调试级别，如果环境变量中没有设置的话
 if 'DBRHEO_DEBUG_LEVEL' not in os.environ:
     os.environ['DBRHEO_DEBUG_LEVEL'] = 'ERROR'
@@ -107,13 +127,13 @@ def setup_environment():
 
 
 @click.command()
-@click.option('--db-file', 
+@click.option('--db-file',
               help='数据库文件路径，默认使用内存数据库',
               type=click.Path())
-@click.option('--log', 
+@click.option('--log',
               is_flag=True,
               help='启用实时日志输出')
-@click.option('--debug', 
+@click.option('--debug',
               type=click.IntRange(*DEBUG_LEVEL_RANGE),
               help='设置调试级别 (0-5)')
 @click.option('--no-color',
@@ -124,17 +144,22 @@ def setup_environment():
               help='配置文件路径')
 @click.option('--model',
               help='选择AI模型 (例如: gemini, claude-3.5-sonnet, gpt-5)')
-def main(db_file: Optional[str], 
-         log: bool, 
+@click.option('--lang', '--language',
+              help='设置界面语言 (zh/en/ja)',
+              type=click.Choice(['zh', 'en', 'ja', 'zh_CN', 'en_US', 'ja_JP']))
+def main(db_file: Optional[str],
+         log: bool,
          debug: Optional[int],
          no_color: bool,
          config: Optional[str],
-         model: Optional[str]):
+         model: Optional[str],
+         lang: Optional[str]):
     """
     DbRheo CLI - 数据库智能助手
-    
+
     专业、简洁、可靠的数据库操作界面
     """
+    # 语言参数已通过预处理函数设置，这里无需额外处理
     # 设置环境变量配置
     setup_environment()
     

@@ -146,6 +146,9 @@ class DatabasePromptManager:
 - "我用execute_code运行这段代码"
 - "通过puppeteer导航到网页"（当使用MCP工具时）
 
+# SQL工具结果显示
+使用sql_execute工具时，系统会自动生成格式化的表格显示查询结果，你无需再重复生成文本形式的表格或重新整理数据。
+
 # 网络查询最佳实践
 使用web_search搜索后，务必挑选2-3个最相关的链接使用web_fetch获取详细内容，以提供准确答案。仅搜索不获取内容会导致信息不完整。
 

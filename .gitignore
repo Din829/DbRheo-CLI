@@ -47,6 +47,11 @@ ENV/
 .emacs.d/
 .sublime-*
 
+# AI Assistant configurations
+.claude/
+.cursor/
+.codeium/
+
 # Testing
 .coverage
 .pytest_cache/

@@ -518,7 +518,7 @@ class DbRheoCLI:
                     }.get(status.value, '❓')
                     
                     tools = mcp_registry.get_server_tools(name)
-                    console.print(f"  {status_icon} {name} - {status.value} ({len(tools)} {_('mcp_tools')})")
+                    console.print(f"  {status_icon} {name} • {status.value} ({len(tools)} {_('mcp_tools')})")
             else:
                 console.print(f"[dim]{_('mcp_no_servers')}[/dim]")
                 console.print(f"\n{_('mcp_add_server_hint')}")
@@ -635,12 +635,12 @@ class DbRheoCLI:
         help_text = f"""
 [bold]{_('mcp_help_title')}[/bold]
 
-  [cyan]/mcp[/cyan]                    - {_('mcp_help_status')}
-  [cyan]/mcp list[/cyan]              - {_('mcp_help_list')}
-  [cyan]/mcp add <name> <cmd>[/cyan]  - {_('mcp_help_add')}
-  [cyan]/mcp remove <name>[/cyan]      - {_('mcp_help_remove')}
-  [cyan]/mcp reload[/cyan]            - {_('mcp_help_reload')}
-  [cyan]/mcp help[/cyan]              - {_('mcp_help_help')}
+  [cyan]/mcp[/cyan]                    • {_('mcp_help_status')}
+  [cyan]/mcp list[/cyan]              • {_('mcp_help_list')}
+  [cyan]/mcp add <name> <cmd>[/cyan]  • {_('mcp_help_add')}
+  [cyan]/mcp remove <name>[/cyan]      • {_('mcp_help_remove')}
+  [cyan]/mcp reload[/cyan]            • {_('mcp_help_reload')}
+  [cyan]/mcp help[/cyan]              • {_('mcp_help_help')}
 
 [bold]{_('mcp_help_examples')}[/bold]
   [dim]# NPX servers (multiple formats supported):[/dim]
@@ -734,17 +734,17 @@ class DbRheoCLI:
         """显示帮助信息"""
         help_text = f"""
 [bold]{_('help_title')}:[/bold]
-  /help        - {_('help_hint')}
-  /exit, /quit - {_('help_exit')}
-  /clear       - {_('help_clear')}
-  /debug <0-5> - {_('help_debug')}
-  /lang [code] - {_('help_lang')}
-  /model [name]- {_('help_model')}
-  /token       - {_('help_token')}
-  /database    - {_('help_database', default='数据库连接帮助')}
-  ``` 或 <<<   - {_('help_multiline')}
-  ESC         - {_('help_esc')}
-  
+  /help        • {_('help_hint')}
+  /exit, /quit • {_('help_exit')}
+  /clear       • {_('help_clear')}
+  /debug <0-5> • {_('help_debug')}
+  /lang \\[code] • {_('help_lang')}
+  /model \\[name] • {_('help_model')}
+  /token       • {_('help_token')}
+  /database    • {_('help_database', default='数据库连接帮助')}
+  ``` 或 <<<   • {_('help_multiline')}
+  ESC         • {_('help_esc')}
+
 [bold]{_('tool_confirmation_title')}:[/bold]
 {_('tool_confirmation_help')}
 """

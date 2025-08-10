@@ -161,9 +161,9 @@ def show_confirmation_prompt(tool_name: str, args: Dict[str, Any],
     
     # 显示操作选项（带框）
     options_content = [
-        f"[green]1[/green] / confirm - {_('confirm_execute')}",
-        f"[red]2[/red] / cancel  - {_('cancel_execute')}",
-        f"confirm all    - {_('confirm_all_tools')}"
+        f"[green]1[/green] / confirm • {_('confirm_execute')}",
+        f"[red]2[/red] / cancel  • {_('cancel_execute')}",
+        f"confirm all    • {_('confirm_all_tools')}"
     ]
     
     options_panel = Panel(
