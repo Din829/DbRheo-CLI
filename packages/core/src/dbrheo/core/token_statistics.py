@@ -118,7 +118,7 @@ class TokenStatistics:
             'gemini-1.5-pro': {'input': 1.25, 'output': 5.00},     # $1.25/$5.00 per 1M
             'claude-3.5-sonnet': {'input': 3.00, 'output': 15.00}, # $3/$15 per 1M
             'gpt-4.1': {'input': 2.50, 'output': 10.00},           # $2.50/$10 per 1M
-            'gpt-4.1-mini': {'input': 0.15, 'output': 0.60}        # $0.15/$0.60 per 1M
+            'gpt-5-mini': {'input': 0.25, 'output': 2.00}          # $0.25/$2.00 per 1M
         }
         
         total_cost = 0.0

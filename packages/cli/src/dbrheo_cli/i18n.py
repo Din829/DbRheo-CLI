@@ -164,7 +164,7 @@ class I18n:
             'supported_models': '支持的模型：',
             'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
             'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
-            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'model_openai': '- OpenAI: gpt-5, gpt-5-mini, o1, o3',
             'help_model': '切换AI模型',
             
             # API Key 相关
@@ -566,7 +566,7 @@ class I18n:
             'supported_models': 'サポートされているモデル：',
             'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
             'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
-            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'model_openai': '- OpenAI: gpt-5, gpt-5-mini, o1, o3',
             'help_model': 'AIモデルを切り替える',
             
             # API Key 関連
@@ -1169,7 +1169,7 @@ class I18n:
             'supported_models': 'Supported models:',
             'model_gemini': '- Gemini: gemini, gemini-2.5-flash, gemini-2.0',
             'model_claude': '- Claude: claude, sonnet, opus, sonnet4, opus4',
-            'model_openai': '- OpenAI: gpt-4, gpt-4.1, o1, o3',
+            'model_openai': '- OpenAI: gpt-5, gpt-5-mini, o1, o3',
             'help_model': 'Switch AI model',
             
             # API Key related

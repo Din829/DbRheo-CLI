@@ -1,0 +1,149 @@
+-- 表：colleague_delivery_logs
+CREATE TABLE `colleague_delivery_logs` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `featured_date` date NOT NULL,
+  `selected_article_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`selected_article_ids`)),
+  `articles_count` int(11) NOT NULL DEFAULT 0,
+  `article_titles` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`article_titles`)),
+  `recipient_emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`recipient_emails`)),
+  `email_subject` varchar(255) DEFAULT NULL,
+  `email_status` enum('SUCCESS','FAILED','PENDING') DEFAULT 'PENDING',
+  `scheduled_time` datetime DEFAULT NULL,
+  `delivery_time` datetime DEFAULT NULL,
+  `error_message` text DEFAULT NULL,
+  `retry_count` int(11) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_delivery_time` (`delivery_time`),
+  KEY `idx_email_status` (`email_status`),
+  KEY `idx_user_date` (`user_id`,`featured_date`),
+  CONSTRAINT `colleague_delivery_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `colleague_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事端推送记录 - 记录同事系统的邮件推送历史';
+
+-- 表：colleague_preferences
+CREATE TABLE `colleague_preferences` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `tech_domains` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`tech_domains`)),
+  `article_count` int(11) NOT NULL DEFAULT 10,
+  `delivery_time` time NOT NULL DEFAULT '09:00:00',
+  `delivery_emails` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`delivery_emails`)),
+  `preference_vector` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`preference_vector`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `notification_type` varchar(20) NOT NULL DEFAULT 'email' COMMENT '通知方式：email=邮件通知, teams=Teams通知, both=两者都用',
+  `teams_webhook_url` text DEFAULT NULL COMMENT 'Teams频道的Webhook URL，用于发送消息卡片',
+  `teams_config` text DEFAULT NULL COMMENT 'Teams通知的额外配置（JSON格式），如频道名、@提及等',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_user_unique` (`user_id`),
+  KEY `idx_active_delivery_time` (`is_active`,`delivery_time`),
+  KEY `idx_colleague_preferences_notification_type` (`notification_type`),
+  CONSTRAINT `colleague_preferences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `colleague_users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_notification_type` CHECK (`notification_type` in ('email','teams','both'))
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事端用户偏好表 - 存储技术领域偏好和推送配置';
+
+-- 表：colleague_system_config
+CREATE TABLE `colleague_system_config` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `config_key` varchar(100) NOT NULL,
+  `config_value` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`config_value`)),
+  `description` text DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `config_key` (`config_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事端系统配置表 - 存储系统级配置，如技术领域列表';
+
+-- 表：colleague_users
+CREATE TABLE `colleague_users` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `last_login_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `eid` varchar(50) DEFAULT NULL COMMENT '社員番号（Employee ID）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `eid` (`eid`),
+  KEY `idx_department` (`department`),
+  KEY `idx_eid` (`eid`),
+  KEY `idx_email_active` (`email`,`is_active`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事端用户表 - 独立的用户系统，支持10-20个同事使用';
+
+-- 表：daily_featured_articles
+CREATE TABLE `daily_featured_articles` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `article_id` bigint(20) NOT NULL,
+  `featured_date` date NOT NULL,
+  `selection_reason` text DEFAULT NULL,
+  `domain_tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`domain_tags`)),
+  `importance_level` enum('高','中','低') DEFAULT '中',
+  `relevance_score` float DEFAULT 0,
+  `diversity_weight` float DEFAULT 0,
+  `timeliness_factor` float DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_article_date` (`article_id`,`featured_date`),
+  KEY `idx_featured_date` (`featured_date`),
+  KEY `idx_importance_level` (`importance_level`),
+  KEY `idx_relevance_score` (`relevance_score`),
+  CONSTRAINT `daily_featured_articles_ibfk_1` FOREIGN KEY (`article_id`) REFERENCES `news_articles` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=888 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='每日精选文章池 - 管理端LLM生成的共享精选池，实现Token优化';
+
+-- 表：news_articles
+CREATE TABLE `news_articles` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `title` varchar(500) NOT NULL,
+  `url` varchar(2048) NOT NULL,
+  `content` longtext DEFAULT NULL,
+  `summary` text DEFAULT NULL,
+  `source` varchar(100) NOT NULL,
+  `source_rss_url` varchar(2048) DEFAULT NULL,
+  `published_at` datetime NOT NULL,
+  `authority_score` float DEFAULT 0,
+  `keywords` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`keywords`)),
+  `language` varchar(10) DEFAULT 'ja',
+  `category` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_hot_news` tinyint(1) DEFAULT 0 COMMENT '是否为热门新闻，基于多维度指标自动识别',
+  `importance_score` int(11) DEFAULT 0 COMMENT '重要性评分(0-200)，基于关键词权重和多源报道等因素计算',
+  `tweet_id` varchar(50) DEFAULT NULL COMMENT '推文ID（仅推特文章有值，用于去重）',
+  `push_reason` varchar(500) DEFAULT NULL COMMENT 'AI推送理由：AI在选择推送时生成的深刻理由说明，解释为什么选择这篇文章推送给用户',
+  `importance_label` varchar(10) DEFAULT NULL COMMENT 'AI智能评估的重要度标签：重要/注目，空值表示普通级别',
+  `daily_featured` tinyint(1) DEFAULT 0 COMMENT '是否被选为每日精选文章',
+  `featured_date` date DEFAULT NULL COMMENT '精选日期（如果被选中）',
+  `domain_vector` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '文章领域向量（用于语义匹配，可选）' CHECK (json_valid(`domain_vector`)),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_url_unique` (`url`(767)),
+  KEY `idx_authority_score` (`authority_score`),
+  KEY `idx_created_published` (`created_at`,`published_at`),
+  KEY `idx_daily_featured_date` (`daily_featured`,`featured_date`),
+  KEY `idx_featured_date_only` (`featured_date`),
+  KEY `idx_hot_authority_published` (`is_hot_news`,`authority_score`,`published_at`),
+  KEY `idx_importance_label` (`importance_label`),
+  KEY `idx_importance_score` (`importance_score`),
+  KEY `idx_is_hot_news` (`is_hot_news`),
+  KEY `idx_language` (`language`),
+  KEY `idx_published_at` (`published_at`),
+  KEY `idx_push_reason` (`push_reason`(100)),
+  KEY `idx_source` (`source`),
+  KEY `idx_tweet_id` (`tweet_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2297 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 表：users
+CREATE TABLE `users` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

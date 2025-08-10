@@ -69,10 +69,10 @@ class OpenAIService:
             "gpt-4.1": "gpt-4.1",
             "gpt4.1": "gpt-4.1",
             
-            # GPT-4.1 Mini
-            "gpt-mini": "gpt-4.1-mini",
-            "gpt-4.1-mini": "gpt-4.1-mini",
-            "mini": "gpt-4.1-mini"
+            # GPT-5 Mini (2025年8月发布)
+            "gpt-mini": "gpt-5-mini",
+            "gpt-5-mini": "gpt-5-mini",
+            "mini": "gpt-5-mini"
         }
         
         # 如果是简短名称，转换为完整名称

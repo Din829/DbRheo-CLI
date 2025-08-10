@@ -71,5 +71,5 @@ SUPPORTED_MODELS = {
     'claude': 'Claude Sonnet 4',
     'sonnet3.7': 'Claude 3.7',
     'gpt': 'GPT-4.1',
-    'gpt-mini': 'GPT-4.1 Mini'
+    'gpt-mini': 'GPT-5 Mini'
 }

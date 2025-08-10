@@ -123,7 +123,7 @@ def setup_environment():
               type=click.Path(exists=True),
               help='配置文件路径')
 @click.option('--model',
-              help='选择AI模型 (例如: gemini, claude-3.5-sonnet, gpt-4.1)')
+              help='选择AI模型 (例如: gemini, claude-3.5-sonnet, gpt-5)')
 def main(db_file: Optional[str], 
          log: bool, 
          debug: Optional[int],
