@@ -1,5 +1,5 @@
 
-# DbRheoCLI - Database/Data Analysis Agent
+# DbRheoCLI - Database/Data Analysis AI Agent
 
 <img width="1244" height="541" alt="屏幕截图 2025-08-10 125038" src="https://github.com/user-attachments/assets/92fed9dc-816f-46b6-b917-65329cc3ee79" />
 
